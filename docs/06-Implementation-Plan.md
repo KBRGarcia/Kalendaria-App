@@ -16,8 +16,8 @@ Tener un proyecto de Expo Router + TypeScript funcionando en blanco, con la estr
 
 1. **Crear el proyecto:**
    ```bash
-   npx create-expo-app@latest calendaria --template blank-typescript
-   cd calendaria
+   npx create-expo-app@latest kalendaria --template blank-typescript
+   cd kalendaria
    
 
 2. Instalar Expo Router y dependencias de navegación:
@@ -33,9 +33,9 @@ npx expo install @expo-google-fonts/inter
 npm install zustand date-fns
 
 4. Configurar app.json:
-- name: "Calendaria"
-- slug: "calendaria"
-- scheme: "calendaria"
+- name: "Kalendaria"
+- slug: "kalendaria"
+- scheme: "kalendaria"
 - Añadir plugins: expo-router, expo-secure-store, expo-splash-screen.
 - Establecer userInterfaceStyle: "automatic".
 
@@ -114,7 +114,7 @@ Tener el backend funcional: proyecto en Supabase, tablas creadas, RLS activo, y 
 - Confirm email activado.
 - OTP expiry: 600 segundos.
 - OTP length: 6.
-- Personalizar template del email con branding "Calendaria".
+- Personalizar template del email con branding "Kalendaria".
 
 4. Generar tipos TypeScript:
 npx supabase gen types typescript --project-id <id> > src/types/database.ts
@@ -175,7 +175,7 @@ export const useThemeStore = create<ThemeState>()(
       setPreference: (preference) => set({ preference }),
     }),
     {
-      name: '@calendaria:theme',
+      name: '@kalendaria:theme',
       storage: createJSONStorage(() => AsyncStorage),
     }
   )
@@ -478,7 +478,7 @@ Permitir consultar actividades sin conexión y manejar errores de red correctame
 - saveMonthToCache(year, month, activities).
 - loadMonthFromCache(year, month): Activity[] | null.
 - clearAllCache().
-- Clave: @calendaria:cache:activities:YYYY-MM.
+- Clave: @kalendaria:cache:activities:YYYY-MM.
 
 2. Modificar activitiesStore.fetchMonth:
 - Intentar fetch desde Supabase.

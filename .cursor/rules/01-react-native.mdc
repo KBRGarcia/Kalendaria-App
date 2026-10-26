@@ -1,0 +1,31 @@
+---
+alwaysApply: true
+---
+
+## 3. React Native y UI
+
+- **R3.1 — Componentes funcionales con hooks.** Nunca uses clases. Usa hooks para estado y efectos secundarios.
+- **R3.2 — Sin `useEffect` para fetching de datos.** La obtención de datos se hace a través de los stores de Zustand o de la capa de servicios (`src/services/`). `useEffect` se reserva para suscripciones, cleanup o efectos verdaderamente secundarios[reference:10].
+- **R3.3 — Usa el sistema de temas del proyecto.** Nunca hardcodees colores. Usa `useTheme()` y los tokens de `src/theme/`. Ejemplo: `theme.colors.primary`, no `#00A4CC` directo en el componente[reference:11].
+- **R3.4 — `StyleSheet.create`.** Define estilos con `StyleSheet.create` en el mismo archivo del componente. No uses estilos inline salvo para valores dinámicos.
+- **R3.5 — Memoización selectiva.** Aplica `React.memo` a componentes de lista (`DayCell`, `ActivityCard`) y `useMemo`/`useCallback` cuando un cálculo o callback se pase como prop a un componente memoizado.
+- **R3.6 — `FlatList` para listas.** Nunca uses `ScrollView` con `.map()` para listas de datos. Usa `FlatList` o `FlashList` (si se añade después) para virtualización.
+- **R3.7 — Safe areas.** Usa `react-native-safe-area-context` (`SafeAreaView` o `useSafeAreaInsets`) en todas las pantallas. No asumas que el notch o el home indicator no existen.
+- **R3.8 — Iconos.** Usa `@expo/vector-icons` (Ionicons). No importes iconos de librerías externas no aprobadas.
+
+---
+
+## 7. Rendimiento
+
+- **R7.1 — Evita renders innecesarios.** Usa `React.memo`, `useMemo`, `useCallback` solo donde aporten valor medible. No memorices todo por defecto.
+- **R7.2 — Caché de consultas.** No vuelvas a hacer fetch de un mes si ya está en el store y no ha pasado el tiempo de invalidación (ver `05-Backend-Schema.md`, sección 8).
+- **R7.3 — Listas virtualizadas.** Usa `FlatList` con `keyExtractor` estable y `getItemLayout` cuando los ítems tengan altura fija.
+- **R7.4 — Imágenes optimizadas.** Usa formatos modernos (WebP) y dimensiones adecuadas. Evita imágenes de más de 200 KB en el bundle.
+
+---
+
+## 9. Accesibilidad
+
+- **R9.1 — `accessibilityLabel` en botones de icono.** Todo botón que no tenga texto visible debe tener una etiqueta descriptiva (“Crear nueva actividad”, “Volver al calendario”).
+- **R9.2 — Tamaños de toque mínimos.** Todos los elementos interactivos deben tener al menos 44x44 pt.
+- **R9.3 — Contraste.** Los colores de texto deben cumplir ratio ≥ 4.5:1 sobre su fondo en ambos temas. Usa las combinaciones definidas en `04-UIUX-Brief.md`.

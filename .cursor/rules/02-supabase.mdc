@@ -1,0 +1,20 @@
+---
+alwaysApply: true
+---
+
+## 4. Supabase y Backend
+
+- **R4.1 — Usa el SDK oficial.** Toda interacción con la base de datos pasa por `@supabase/supabase-js`. No construyas URLs manualmente ni uses `fetch` directo a la API de Supabase[reference:12].
+- **R4.2 — Tipos generados, no escritos a mano.** Los tipos de las tablas se generan con `npx supabase gen types` en `src/types/database.ts`. Nunca edites ese archivo manualmente ni escribas interfaces duplicadas. Usa `Tables<'activities'>` y `Tables<'profiles'>` donde sea necesario[reference:13][reference:14].
+- **R4.3 — RLS siempre activo.** No crees políticas que permitan acceso a datos de otros usuarios. Cualquier nueva tabla debe tener RLS habilitado y políticas explícitas (SELECT, INSERT, UPDATE, DELETE).
+- **R4.4 — Sin `service_role` en el cliente.** La `anon key` es la única que se usa en la app. La `service_role` key solo existe en el servidor (nunca en `EXPO_PUBLIC_*`).
+- **R4.5 — Consultas específicas.** Selecciona solo las columnas necesarias (`.select('id, title, category, date')`) en lugar de `*` cuando no necesites todos los campos. Usa `.single()` cuando esperes un solo resultado.
+- **R4.6 — Manejo de errores explícito.** Cada llamada a Supabase debe comprobar `error` y lanzar una excepción o manejarlo. No ignores errores silenciosamente.
+
+---
+
+## 8. Seguridad
+
+- **R8.1 — Secretos fuera del código.** Ninguna clave, token o contraseña se hardcodea. Las variables de entorno se leen de `.env.local` y se acceden con `process.env.EXPO_PUBLIC_*` solo para valores públicos.
+- **R8.2 — Tokens en SecureStore.** La sesión de Supabase se guarda con `expo-secure-store`, nunca en AsyncStorage plano.
+- **R8.3 — No expongas datos de otros usuarios.** RLS es la última línea de defensa, pero el cliente tampoco debe intentar consultar datos ajenos.

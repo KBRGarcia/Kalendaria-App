@@ -1,0 +1,18 @@
+---
+alwaysApply: true
+---
+
+## 10. Convenciones de Commits y Documentación
+
+- **R10.1 — Conventional Commits.** Usa `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`, `test:` con un mensaje en inglés o español, pero consistente. Ejemplo: `feat(calendar): add month navigation`.
+- **R10.2 — Commits atómicos.** Un commit = un cambio lógico. No mezcles refactors masivos con features en el mismo commit.
+- **R10.3 — Documenta decisiones no obvias.** Si tomas una decisión técnica que no está en los docs, actualiza el documento correspondiente (`02-TRD.md` o `05-Backend-Schema.md`) en el mismo PR/commit.
+
+---
+
+## 11. Flujo de Trabajo con el Agente
+
+- **R11.1 — Lee los docs antes de codificar.** Antes de implementar una funcionalidad, consulta el documento relevante (`01-PRD.md`, `04-UIUX-Brief.md`, etc.) y cita la sección que estás siguiendo.
+- **R11.2 — Pregunta antes de asumir.** Si una decisión no está cubierta por los documentos, pregunta al usuario en lugar de inventar. Especialmente en diseño visual, nombres de campos y flujos de navegación.
+- **R11.3 — No avances de fase sin validar.** Sigue el `06-Implementation-Plan.md` en orden. No empieces la Fase 4 si la Fase 3 no está completa y probada.
+- **R11.4 — Verifica antes de entregar.** Antes de decir que una tarea está lista, comprueba que compila (`npx tsc --noEmit`), que no hay warnings en consola y que los criterios de “Done” de la fase se cumplen.

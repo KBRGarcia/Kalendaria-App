@@ -361,7 +361,7 @@ Dot (punto de categoría):
 ### 7.2. Login
 Layout vertical, centrado:
 1. Logo (80px) arriba, centrado, margen superior 80px.
-2. Título "Bienvenido a Calendaria" (h1, text).
+2. Título "Bienvenido a Kalendaria" (h1, text).
 3. Subtítulo "Tu agenda personal, simple y clara" (body, textSecondary).
 4. Espacio xl (24px).
 5. Input email con icono mail-outline.
@@ -533,7 +533,7 @@ Regla: las animaciones son sutiles y nunca bloquean la interacción.
 -- Isotipo (solo símbolo, sin texto).
 
 ### 12.2. Splash screen
-- Imagen centrada: logo + "Calendaria" debajo.
+- Imagen centrada: logo + "Kalendaria" debajo.
 - Fondo: #F2ECEA (light) / #0E1C22 (dark).
 
 ### 12.3. App icon

@@ -1,5 +1,5 @@
 # Product Requirements Document (PRD)
-## Calendaria — App de Agenda y Calendario Personal
+## Kalendaria — App de Agenda y Calendario Personal
 
 **Versión:** 1.0
 **Fecha:** Octubre 2026
@@ -11,7 +11,7 @@
 
 ### 1.1. Resumen ejecutivo
 
-Calendaria es una aplicación móvil de agenda personal que permite al usuario anotar actividades y eventos en un calendario, tanto pasados (registro de lo que se hizo) como futuros (planificación de reuniones y pendientes). El objetivo es ofrecer una herramienta **sumamente sencilla**, sin alarmas, sin notificaciones y sin dependencia de servicios de Google, que permita al usuario tener su agenda de trabajo organizada y consultable desde cualquier teléfono mediante una cuenta propia.
+Kalendaria es una aplicación móvil de agenda personal que permite al usuario anotar actividades y eventos en un calendario, tanto pasados (registro de lo que se hizo) como futuros (planificación de reuniones y pendientes). El objetivo es ofrecer una herramienta **sumamente sencilla**, sin alarmas, sin notificaciones y sin dependencia de servicios de Google, que permita al usuario tener su agenda de trabajo organizada y consultable desde cualquier teléfono mediante una cuenta propia.
 
 ### 1.2. Problema que resuelve
 

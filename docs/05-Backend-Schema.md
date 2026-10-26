@@ -1,5 +1,5 @@
 # Backend Schema
-## Calendaria — App de Agenda y Calendario Personal
+## Kalendaria — App de Agenda y Calendario Personal
 
 **Versión:** 1.0
 **Fecha:** Octubre 2026
@@ -11,7 +11,7 @@
 
 ## 1. Resumen
 
-Calendaria utiliza **Supabase** como backend. El esquema se compone de:
+Kalendaria utiliza **Supabase** como backend. El esquema se compone de:
 
 - **Autenticación:** gestionada por `auth.users` (esquema interno de Supabase).
 - **Perfil de usuario:** tabla `profiles` que extiende `auth.users` con datos propios de la app.
@@ -612,9 +612,9 @@ async function updateThemePreference(
 ### 8.1. Claves utilizadas
 
 Clave   |   Contenido   |   Formato
-@calendaria:cache:activities:YYYY-MM   |   Actividades de un mes   |   JSON array
-@calendaria:theme   |   Preferencia de tema   |   string
-@calendaria:lastSync   |   Timestamp de la última sincronización	ISO   |   string
+@kalendaria:cache:activities:YYYY-MM   |   Actividades de un mes   |   JSON array
+@kalendaria:theme   |   Preferencia de tema   |   string
+@kalendaria:lastSync   |   Timestamp de la última sincronización	ISO   |   string
 
 ### 8.2. Estrategia de invalidación
 
@@ -712,7 +712,7 @@ Antes de dar por bueno el backend, verificar:
 # 📄 Archivo 2: `06-Implementation-Plan.md`
 
 # Implementation Plan
-## Calendaria — App de Agenda y Calendario Personal
+## Kalendaria — App de Agenda y Calendario Personal
 
 **Versión:** 1.0
 **Fecha:** Octubre 2026

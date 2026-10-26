@@ -1,0 +1,35 @@
+---
+alwaysApply: true
+---
+
+## 0. Reglas Generales (siempre aplican)
+
+Estas reglas son la base de cualquier contribución. No son opcionales.
+
+- **R0.1 — Buenas prácticas.** Aplica principios reconocidos de ingeniería de software (SOLID, DRY, KISS, YAGNI) en cada decisión. Si una solución rápida compromete la mantenibilidad, recházala y propone la alternativa correcta.
+- **R0.2 — Código limpio.** Prioriza la legibilidad sobre la brevedad. Nombra variables y funciones de forma descriptiva. Evita comentarios que expliquen *qué* hace el código; usa comentarios solo para explicar *por qué* se tomó una decisión no obvia. Mantén funciones cortas (idealmente < 30 líneas, máximo 50)[reference:1].
+- **R0.3 — Archivos ordenados.** Respeta estrictamente la estructura de carpetas definida en `02-TRD.md` (sección 3.1) y `06-Implementation-Plan.md` (Fase 0). No crees archivos fuera de las carpetas designadas. Si necesitas una nueva carpeta, justifícala y actualiza la documentación.
+- **R0.4 — Optimización.** Escribe código eficiente por defecto: evita re-renders innecesarios (usa `React.memo`, `useMemo`, `useCallback` cuando corresponda), no hagas fetch duplicados, y usa listas virtualizadas (`FlatList`) para conjuntos grandes. No optimices prematuramente, pero no introduzcas ineficiencias obvias.
+- **R0.5 — Vanguardia.** Usa las versiones estables más recientes del stack (Expo SDK 54, React Native 0.81, TypeScript 5.6+). No uses APIs deprecadas. Si una librería del stack tiene una alternativa moderna oficial, úsala.
+- **R0.6 — Documentación oficial.** Antes de implementar algo que no domines, consulta la documentación oficial de Expo, React Native, Supabase o TypeScript. No inventes APIs ni importes helpers que no existan. Si no estás seguro, pregunta al usuario en lugar de asumir[reference:2].
+
+---
+
+## 1. TypeScript
+
+- **R1.1 — `strict: true` siempre.** No desactives `strict` ni `noImplicitAny` en `tsconfig.json`. Todo el código debe compilar sin errores de TypeScript.
+- **R1.2 — Sin `any`.** Usa `unknown` cuando el tipo no se conozca y refínalo con type guards. Si una librería externa devuelve `any`, envuélvela en un tipo propio.
+- **R1.3 — `interface` para formas de objeto, `type` para uniones.** Sigue la convención del proyecto: `interface Activity { ... }`, `type ActivityCategory = 'reunion' | 'pendiente' | ...`[reference:3].
+- **R1.4 — Sin `enum`.** Usa objetos `const` con `as const` o uniones literales. Ejemplo: `const CATEGORIES = { REUNION: 'reunion', ... } as const`[reference:4].
+- **R1.5 — Sin `default export` en componentes.** Usa siempre `export function ComponentName()` o `export const ComponentName = ...`. La única excepción son las rutas de Expo Router, que por convención usan default export[reference:5].
+- **R1.6 — Tipos explícitos en parámetros y retornos públicos.** No dejes que TypeScript infiera tipos en funciones exportadas o en APIs públicas del proyecto.
+
+---
+
+## 2. Expo Router y Estructura de Carpetas
+
+- **R2.1 — `src/app` es solo para rutas.** Cada archivo dentro de `src/app` (excepto `_layout.tsx`) es una ruta. No coloques lógica de negocio, componentes reutilizables ni utilidades dentro de `src/app`[reference:6].
+- **R2.2 — Rutas delgadas.** Los archivos de ruta deben ser *pass-throughs* mínimos: importan un componente de feature y lo renderizan. La lógica compleja vive en `src/components/` o en hooks[reference:7].
+- **R2.3 — `_layout.tsx` raíz obligatorio.** Debe existir `src/app/_layout.tsx`. Ahí van providers globales (tema, auth), carga de fuentes y lógica de splash screen[reference:8].
+- **R2.4 — Usa `src/` como raíz de código.** Separa el código de la app (`src/`) de los archivos de configuración (`app.json`, `eas.json`, etc.)[reference:9].
+- **R2.5 — Nombres de ruta en kebab-case o snake_case, consistentes.** Para archivos de ruta usa `[param].tsx` o nombres descriptivos. Para componentes reutilizables, usa `PascalCase.tsx` (convención del proyecto, según `02-TRD.md`).
