@@ -1,88 +1,38 @@
 
 ## FASE 0 — Setup del Proyecto
 
+**Estado:** completada en octubre 2026 sobre el repo existente. No vuelvas a ejecutar `create-expo-app` dentro de esta carpeta.
+
 ### Objetivo
 
 Tener un proyecto de Expo Router + TypeScript funcionando en blanco, con la estructura de carpetas y todas las dependencias instaladas.
 
 ### Entregable
 
-- Proyecto Expo ejecutándose en Expo Go.
+- Proyecto Expo SDK 58 en la raíz del repo, con `main` en `expo-router/entry`.
 - `tsconfig.json` con alias de paths.
-- Dependencias del TRD instaladas.
-- Estructura de carpetas creada (aunque vacía).
+- Dependencias del TRD instaladas con `npx expo install`.
+- Estructura de carpetas creada. Rutas en `src/app`.
 
-### Tareas
+### Cómo se creó
 
-1. **Crear el proyecto:**
-   ```bash
-   npx create-expo-app@latest kalendaria --template blank-typescript
-   cd kalendaria
-   
-
-2. Instalar Expo Router y dependencias de navegación:
-npx expo install expo-router react-native-safe-area-context react-native-screens expo-linking expo-constants expo-status-bar
-
-3. Instalar el resto de dependencias:
-npx expo install @supabase/supabase-js react-native-url-polyfill expo-secure-store
-npx expo install @react-native-async-storage/async-storage
-npx expo install @react-native-community/netinfo
-npx expo install expo-haptics expo-splash-screen
-npx expo install react-native-gesture-handler react-native-reanimated
-npx expo install @expo-google-fonts/inter
-npm install zustand date-fns
-
-4. Configurar app.json:
-- name: "Kalendaria"
-- slug: "kalendaria"
-- scheme: "kalendaria"
-- Añadir plugins: expo-router, expo-secure-store, expo-splash-screen.
-- Establecer userInterfaceStyle: "automatic".
-
-5. Configurar package.json:
-- "main": "expo-router/entry".
-
-6. Configurar tsconfig.json:
-- "strict": true.
-- Alias:
-
-"paths": {
-  "@/*": ["./src/*"],
-  "@components/*": ["./src/components/*"],
-  "@hooks/*": ["./src/hooks/*"],
-  "@store/*": ["./src/store/*"],
-  "@services/*": ["./src/services/*"],
-  "@theme/*": ["./src/theme/*"],
-  "@lib/*": ["./src/lib/*"],
-  "@types/*": ["./src/types/*"]
-}
-
-7. Crear estructura de carpetas:
-app/(auth)/, app/(app)/, src/components/ui/, src/components/calendar/,
-src/components/activity/, src/constants/, src/hooks/, src/lib/,
-src/services/, src/store/, src/theme/, src/types/
-
-8. Crear archivos placeholder:
-- app/_layout.tsx (root layout).
-- app/index.tsx (redirect a /login).
-- src/lib/supabase.ts (cliente Supabase).
-
-9. Crear .env.local:
-EXPO_PUBLIC_SUPABASE_URL=
-EXPO_PUBLIC_SUPABASE_ANON_KEY=
-(Se llenan en la Fase 1.)
-
-10. Añadir .env.local a .gitignore.
-
-11. Commit:
-chore(setup): initial project scaffolding with Expo Router + TS
+1. Node 22 (`nvm use 22`). No usar Node 20 ni Node 25.
+2. Plantilla oficial `blank-typescript` de SDK 58, generada fuera del repo y copiada a la raíz, sin el `.git` del generador.
+3. Dependencias de navegación, Supabase, almacenamiento, gestos y fuentes, más `react-native-worklets` (peer de Reanimated en SDK 58).
+4. `app.json`: nombre `Kalendaria`, slug y scheme `kalendaria`, `userInterfaceStyle: "automatic"`, plugins `expo-router`, `expo-status-bar`, `expo-secure-store` y `expo-splash-screen` (imagen `./assets/splash-icon.png`, fondo `#E6F4FE`). Experimentos `typedRoutes` y `reactCompiler`.
+5. `overrides.react-dom` en `19.3.0` para no chocar con React 19.3.0 del SDK.
+6. Alias de `tsconfig.json`, incluido `@/assets/*`.
+7. Carpetas: `src/app/(auth)/`, `src/app/(app)/`, `src/components/ui/`, `src/components/calendar/`, `src/components/activity/`, `src/constants/`, `src/hooks/`, `src/lib/`, `src/services/`, `src/store/`, `src/theme/`, `src/types/`.
+8. Placeholders: `src/app/_layout.tsx`, `src/app/index.tsx` (redirect a `/login`), `src/app/(auth)/login.tsx` (pantalla en blanco) y `src/lib/supabase.ts`.
+9. `.env.local` con `EXPO_PUBLIC_SUPABASE_URL` y `EXPO_PUBLIC_SUPABASE_ANON_KEY` vacías. Ya está cubierto por `.gitignore` (`.env*.local`).
 
 ### Criterio de "Done"
 
-- npx expo start abre el proyecto sin errores.
-- Se ve una pantalla en blanco en Expo Go.
-- No hay warnings de TypeScript.
-- La estructura de carpetas está creada.
+- `npx tsc --noEmit` sin errores.
+- `npx expo-doctor` sin problemas.
+- El bundle usa `src/app` como raíz.
+- La pantalla inicial es blanca (`/login`).
+- No se prueba con la Expo Go de la tienda: durante la transición esa app sigue en SDK 57. Este proyecto es SDK 58 y se ejecuta con un development build.
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -119,11 +69,9 @@ Tener el backend funcional: proyecto en Supabase, tablas creadas, RLS activo, y 
 4. Generar tipos TypeScript:
 npx supabase gen types typescript --project-id <id> > src/types/database.ts
 
-5. Configurar cliente Supabase (src/lib/supabase.ts):
-- Adaptador de SecureStore.
-- autoRefreshToken: true, persistSession: true.
+5. El cliente de `src/lib/supabase.ts` ya existe desde la Fase 0 (SecureStore, `EXPO_PUBLIC_SUPABASE_ANON_KEY`). No lo reescribas con el quickstart de `expo-sqlite`. Cuando existan los tipos generados, pásale el genérico `Database`.
 
-6. Rellenar .env.local con URL y anon key.
+6. Rellenar `.env.local` con la URL y la anon key. No renombres la variable a `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`.
 
 7. Probar la conexión con un script temporal:
 const { data, error } = await supabase.from('activities').select('*');
@@ -187,7 +135,7 @@ export const useThemeStore = create<ThemeState>()(
 - Contexto con el objeto de tema.
 
 7. Implementar useTheme() que consume el contexto.
-8. Cargar fuente Inter en app/_layout.tsx con useFonts.
+8. Cargar fuente Inter en src/app/_layout.tsx con useFonts.
 9. Probar: cambiar el store manualmente y verificar que el tema reacciona (aunque no haya UI todavía, loguear el tema activo).
 10. Commit:
 feat(theme): add design system with light/dark themes
@@ -208,8 +156,8 @@ Flujo completo de autenticación funcional: registro con OTP, login con regla de
 - Pantallas: login.tsx, register.tsx, verify.tsx.
 - authStore con Zustand.
 - authService con todas las operaciones.
-- Guard en app/(app)/_layout.tsx que redirige a login si no hay sesión.
-- Redirect automático en app/index.tsx según estado de sesión.
+- Guard en src/app/(app)/_layout.tsx que redirige a login si no hay sesión.
+- Redirect automático en src/app/index.tsx según estado de sesión.
 
 ## Tareas
 1. Implementar authService.ts:
@@ -233,18 +181,18 @@ Flujo completo de autenticación funcional: registro con OTP, login con regla de
 - OtpInput (6 cajas auto-avance).
 - Loading (spinner centrado).
 
-4. Implementar app/(auth)/_layout.tsx:
+4. Implementar src/app/(auth)/_layout.tsx:
 - Stack con header oculto.
 
-5. Implementar app/(auth)/login.tsx según 04-UIUX-Brief.md sección 7.2.
-6. Implementar app/(auth)/register.tsx según sección 7.3.
-7. Implementar app/(auth)/verify.tsx según sección 7.4.
+5. Implementar src/app/(auth)/login.tsx según 04-UIUX-Brief.md sección 7.2.
+6. Implementar src/app/(auth)/register.tsx según sección 7.3.
+7. Implementar src/app/(auth)/verify.tsx según sección 7.4.
 - Acepta params email y mode (signup | login).
 
-8. Implementar app/(app)/_layout.tsx:
+8. Implementar src/app/(app)/_layout.tsx:
 - Guard: si no hay sesión → <Redirect href="/(auth)/login" />.
 
-9. Implementar app/index.tsx:
+9. Implementar src/app/index.tsx:
 - Si hay sesión → redirect a /(app)/calendar.
 - Si no → redirect a /(auth)/login.
 
@@ -275,7 +223,7 @@ feat(auth): implement signup, login, OTP verification, and session management
 Pantalla principal con un grid de calendario mensual que muestre indicadores de categorías en los días con actividades.
 
 ## Entregable
-- app/(app)/calendar.tsx funcional.
+- src/app/(app)/calendar.tsx funcional.
 - Componentes: MonthNavigator, WeekdayHeader, MonthGrid, DayCell, CategoryDots.
 - activitiesStore.fetchMonth() implementado.
 - activitiesService.fetchByMonth() implementado.
@@ -334,7 +282,7 @@ feat(calendar): implement monthly calendar view with category indicators
 Pantalla que muestra todas las actividades de un día concreto, con estado vacío y FAB para crear.
 
 ## Entregable
-- app/(app)/day/[date].tsx funcional.
+- src/app/(app)/day/[date].tsx funcional.
 - Componente ActivityCard.
 - Componente EmptyState.
 
@@ -373,7 +321,7 @@ feat(day): add day detail view with activity list
 Flujo completo de crear, editar y eliminar actividades.
 
 ## Entregable
-- app/(app)/activity/new.tsx y app/(app)/activity/[id].tsx.
+- src/app/(app)/activity/new.tsx y src/app/(app)/activity/[id].tsx.
 - Componentes ActivityForm, CategoryPicker, ConfirmDialog.
 - Acciones del store: createActivity, updateActivity, deleteActivity.
 
@@ -436,7 +384,7 @@ feat(activity): implement full CRUD with category picker and delete confirmation
 Pantalla de ajustes con toggle de tema, info de cuenta y logout.
 
 ## Entregable
-- app/(app)/settings.tsx funcional.
+- src/app/(app)/settings.tsx funcional.
 - Componente SegmentedControl.
 
 ## Tareas
@@ -540,7 +488,7 @@ Revisar toda la app contra el checklist de diseño y accesibilidad, corregir det
 - Verificar useMemo para agrupar actividades.
 - Verificar que FlatList no re-renderiza innecesariamente.
 
-9. Añadir Error Boundary global en app/_layout.tsx.
+9. Añadir Error Boundary global en src/app/_layout.tsx.
 10. Revisar todos los textos en español (sin typos).
 11. Commit:
 chore(polish): accessibility, animations, and QA pass

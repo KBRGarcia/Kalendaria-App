@@ -20,11 +20,11 @@ Kalendaria es una aplicación móvil multiplataforma (Android + iOS) construida 
 
 | Herramienta | Versión | Uso |
 |---|---|---|
-| **Node.js** | 20.x LTS (vía nvm) | Runtime para npm, Metro y Expo CLI |
+| **Node.js** | 22.x LTS (mínimo 22.13, vía nvm) | Runtime para npm, Metro y Expo CLI. No usar 20.x ni 25.x. |
 | **npm** | Incluido con Node | Gestión de dependencias |
-| **Expo Go** | Compatible con SDK 54 | Ejecución en dispositivo físico durante desarrollo |
+| **Development build** | SDK 58 | Ejecución en dispositivo o emulador. Expo Go de la tienda sigue en SDK 57 durante la transición y no abre este proyecto. |
 | **EAS CLI** | Global (opcional) | Build de APK/AAB en producción (futuro) |
-| **TypeScript** | ~5.6.x | Tipado estático en todo el código fuente |
+| **TypeScript** | ~6.0.3 | Tipado estático en todo el código fuente |
 
 > **Nota:** No usar `expo-cli` global (obsoleto). Siempre `npx expo` dentro del proyecto.
 
@@ -32,11 +32,12 @@ Kalendaria es una aplicación móvil multiplataforma (Android + iOS) construida 
 
 | Paquete | Versión | Rol |
 |---|---|---|
-| `expo` | SDK 54 (última estable) | Plataforma, bundler, plugins nativos |
-| `react` | 19.x | Motor de UI |
-| `react-native` | 0.81.x | Componentes nativos |
+| `expo` | SDK 58 (`~58.0.19`) | Plataforma, bundler, plugins nativos |
+| `react` | 19.3.0 | Motor de UI. El SDK lo fija en esta versión; no subirlo a 19.3.1. |
+| `react-native` | 0.88.0 | Componentes nativos |
+| `react-dom` | 19.3.0 (`overrides`) | Solo para resolver un peer de `expo-router`. No es un objetivo web. |
 
-> **Nota:** Expo SDK 54 es la versión estable más reciente. La referencia a "SDK 57" en documentación previa era errónea.
+> **Nota:** SDK 58 es la estable de octubre 2026. `experiments.typedRoutes` y `experiments.reactCompiler` están activos. El punto de entrada es `expo-router/entry` y las rutas viven en `src/app`, no en `app/` en la raíz.
 
 ### 2.3. Navegación
 
@@ -47,24 +48,29 @@ Kalendaria es una aplicación móvil multiplataforma (Android + iOS) construida 
 | `react-native-safe-area-context` | Manejo de áreas seguras (notch, barras del sistema) |
 | `react-native-gesture-handler` | Gestos nativos (swipe entre meses) |
 | `react-native-reanimated` | Animaciones fluidas (transiciones) |
+| `react-native-worklets` | Peer obligatorio de Reanimated en SDK 58. Instalarlo con `npx expo install react-native-reanimated react-native-worklets`. |
 
-**Estructura de rutas (Expo Router):**
+**Estructura de rutas (Expo Router).** El grupo `(auth)` no aparece en la URL.
 
-app/
-├── _layout.tsx # Layout raíz (providers globales)
-├── index.tsx # Punto de entrada (redirect según auth)
-├── (auth)/ # Grupo de rutas de autenticación
-│ ├── _layout.tsx
-│ ├── login.tsx
-│ ├── register.tsx
-│ └── verify.tsx # Verificación por código
-├── (app)/ # Grupo de rutas protegidas
-│ ├── _layout.tsx # Guard de autenticación
-│ ├── calendar.tsx # Calendario mensual (home)
-│ ├── day/[date].tsx # Detalle del día (ej: /day/2026-10-14)
-│ ├── activity/new.tsx # Crear actividad (recibe ?date=YYYY-MM-DD)
-│ ├── activity/[id].tsx # Editar actividad
-│ └── settings.tsx # Ajustes (tema, logout)
+```
+src/app/
+├── _layout.tsx          # Layout raíz (providers globales)
+├── index.tsx            # Redirect a /login
+├── (auth)/              # Autenticación
+│   ├── _layout.tsx
+│   ├── login.tsx
+│   ├── register.tsx
+│   └── verify.tsx       # Verificación por código
+└── (app)/               # Rutas protegidas
+    ├── _layout.tsx      # Guard de autenticación
+    ├── calendar.tsx     # Calendario mensual (home)
+    ├── day/[date].tsx   # Detalle del día (ej: /day/2026-10-14)
+    ├── activity/new.tsx # Crear actividad (?date=YYYY-MM-DD)
+    ├── activity/[id].tsx
+    └── settings.tsx     # Ajustes (tema, logout)
+```
+
+Fase 0 dejó creados `src/app/_layout.tsx`, `src/app/index.tsx` y `src/app/(auth)/login.tsx`. El resto se crea en su fase. No añadas un `app/` en la raíz: si existen los dos, Expo Router usa solo `src/app`.
 
 
 ### 2.4. Estado y persistencia
@@ -95,7 +101,7 @@ app/
 | Paquete | Rol |
 |---|---|
 | `date-fns` | Manipulación de fechas (formato, comparación, locale `es`) |
-| `@expo/vector-icons` | Iconografía (Ionicons) |
+| Ionicons | Iconografía prevista. No instalar `@expo/vector-icons`: la guía de iconos de Expo lo marca como deprecado. El paquete sustituto se elige antes de la primera pantalla con iconos. |
 | `expo-status-bar` | Control de la barra de estado del sistema |
 
 ### 2.7. Funcionalidades nativas (Expo modules)
@@ -112,12 +118,11 @@ app/
 json
 "plugins": [
   "expo-router",
+  "expo-status-bar",
   "expo-secure-store",
   ["expo-splash-screen", {
-    "backgroundColor": "#ffffff",
-    "image": "./assets/images/splash.png",
-    "resizeMode": "contain",
-    "imageWidth": 200
+    "backgroundColor": "#E6F4FE",
+    "image": "./assets/splash-icon.png"
   }]
 ]
 
@@ -128,12 +133,12 @@ json
 ### 3.1. Estructura de carpetas
 
 Kalendaria/
-├── app/                          # Rutas (Expo Router)
-│   ├── _layout.tsx
-│   ├── index.tsx
-│   ├── (auth)/
-│   └── (app)/
 ├── src/
+│   ├── app/                      # Rutas (Expo Router). No crear app/ en la raíz.
+│   │   ├── _layout.tsx
+│   │   ├── index.tsx
+│   │   ├── (auth)/
+│   │   └── (app)/
 │   ├── components/               # Componentes reutilizables
 │   │   ├── ui/                   # Botones, inputs, modales base
 │   │   ├── calendar/             # MonthGrid, DayCell, ActivityDot
@@ -165,8 +170,7 @@ Kalendaria/
 │       ├── auth.ts
 │       ├── activity.ts
 │       └── database.ts           # Tipos generados por Supabase
-├── assets/
-│   └── images/
+├── assets/                       # icon.png, splash-icon.png, favicon.png, android-icon-*
 ├── app.json
 ├── package.json
 ├── tsconfig.json
@@ -199,11 +203,14 @@ Alias de paths configurados en tsconfig.json:
 
 "paths": {
   "@/*": ["./src/*"],
+  "@/assets/*": ["./assets/*"],
   "@components/*": ["./src/components/*"],
   "@hooks/*": ["./src/hooks/*"],
   "@store/*": ["./src/store/*"],
   "@services/*": ["./src/services/*"],
-  "@theme/*": ["./src/theme/*"]
+  "@theme/*": ["./src/theme/*"],
+  "@lib/*": ["./src/lib/*"],
+  "@types/*": ["./src/types/*"]
 }
 
 ### 3.4. Variables de entorno
@@ -243,9 +250,11 @@ Regla de negocio: si el último login fue hace < 30 días, no se pide OTP.
 5. Se actualiza last_login_at tras login exitoso.
 
 ### 4.3. Persistencia de sesión
-- Supabase client configurado con storage: ExpoSecureStoreAdapter.
-- Al abrir la app, supabase.auth.getSession() restaura la sesión si existe.
-- (app)/_layout.tsx verifica sesión activa; si no hay, redirige a /login.
+- El cliente de `src/lib/supabase.ts` guarda la sesión en `expo-secure-store` y lee `EXPO_PUBLIC_SUPABASE_URL` y `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
+- Decisión de Fase 0: no usar el quickstart actual de Supabase para Expo, que persiste con `expo-sqlite/localStorage` y nombra la clave `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. SecureStore cumple la regla de guardar el token en el llavero. No cambies el adaptador ni el nombre de la variable sin una decisión explícita.
+- Mientras esas variables estén vacías, no importes el cliente en el arranque: el módulo lanza si faltan.
+- Al abrir la app, `supabase.auth.getSession()` restaura la sesión si existe.
+- `src/app/(app)/_layout.tsx` verifica sesión activa; si no hay, redirige a `/login`.
 
 ### 4.4. Configuración Supabase
 - Email templates: personalizar los correos de verificación con branding "Kalendaria".
@@ -469,8 +478,8 @@ export const darkTheme = { ... };
 ## 14. Build y Deployment
 
 ### 14.1. Desarrollo
-- npx expo start → QR para Expo Go.
-- Ejecución en dispositivo físico o emulador.
+- `npx expo start` levanta Metro. El proyecto es SDK 58: no se abre con la Expo Go de la tienda (sigue en SDK 57 durante la transición). En dispositivo hace falta un development build.
+- Ejecución en emulador o development build.
 
 ### 14.2. Build de producción
 - EAS Build con perfiles en eas.json:
@@ -517,38 +526,46 @@ Dependencia total de Supabase   |   Medio   |   Backend abstraído en services/;
 
 ---
 
-## 18. Dependencias Completas (package.json objetivo)
+## 18. Dependencias instaladas (Fase 0)
+
+Resueltas con `npx expo install` para SDK 58. No vuelvas a fijar las versiones de SDK 54.
+
+```json
 {
   "dependencies": {
-    "expo": "~54.0.0",
-    "expo-router": "~4.0.0",
-    "expo-secure-store": "~14.0.0",
-    "expo-splash-screen": "~0.29.0",
-    "expo-status-bar": "~2.0.0",
-    "expo-haptics": "~14.0.0",
-    "react": "19.0.0",
-    "react-native": "0.81.0",
-    "react-native-safe-area-context": "~4.12.0",
-    "react-native-screens": "~4.1.0",
-    "react-native-gesture-handler": "~2.20.0",
-    "react-native-reanimated": "~3.16.0",
-    "react-native-url-polyfill": "^2.0.0",
-    "@supabase/supabase-js": "^2.45.0",
-    "@react-native-async-storage/async-storage": "2.1.0",
-    "@react-native-community/netinfo": "11.4.1",
-    "zustand": "^5.0.0",
-    "date-fns": "^4.1.0",
-    "@expo/vector-icons": "^14.0.0"
+    "expo": "~58.0.19",
+    "expo-router": "~58.0.26",
+    "expo-constants": "~58.0.13",
+    "expo-linking": "~58.0.14",
+    "expo-secure-store": "~58.0.2",
+    "expo-splash-screen": "~58.0.11",
+    "expo-status-bar": "~58.0.4",
+    "expo-haptics": "~58.0.7",
+    "react": "19.3.0",
+    "react-native": "0.88.0",
+    "react-native-safe-area-context": "~5.10.1",
+    "react-native-screens": "~4.30.0",
+    "react-native-gesture-handler": "~3.3.0",
+    "react-native-reanimated": "4.7.1",
+    "react-native-worklets": "0.13.0",
+    "react-native-url-polyfill": "^4.0.0",
+    "@supabase/supabase-js": "^2.118.0",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "@react-native-community/netinfo": "12.0.1",
+    "@expo-google-fonts/inter": "^0.4.2",
+    "zustand": "^5.0.16",
+    "date-fns": "^4.4.0"
   },
   "devDependencies": {
-    "typescript": "~5.6.0",
-    "@types/react": "~19.0.0",
-    "eslint": "^8.57.0",
-    "eslint-config-expo": "~8.0.0",
-    "prettier": "^3.3.0"
+    "typescript": "~6.0.3",
+    "@types/react": "~19.3.0"
+  },
+  "overrides": {
+    "react-dom": "19.3.0"
   }
 }
+```
 
-Las versiones son orientativas; al inicializar el proyecto se debe ejecutar npx expo install para cada paquete y dejar que Expo resuelva las versiones compatibles con el SDK.
+ESLint y Prettier todavía no están instalados. `@expo/vector-icons` tampoco: no lo añadas.
 
 

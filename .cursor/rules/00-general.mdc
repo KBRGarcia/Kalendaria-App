@@ -10,7 +10,7 @@ Estas reglas son la base de cualquier contribución. No son opcionales.
 - **R0.2 — Código limpio.** Prioriza la legibilidad sobre la brevedad. Nombra variables y funciones de forma descriptiva. Evita comentarios que expliquen *qué* hace el código; usa comentarios solo para explicar *por qué* se tomó una decisión no obvia. Mantén funciones cortas (idealmente < 30 líneas, máximo 50)[reference:1].
 - **R0.3 — Archivos ordenados.** Respeta estrictamente la estructura de carpetas definida en `02-TRD.md` (sección 3.1) y `06-Implementation-Plan.md` (Fase 0). No crees archivos fuera de las carpetas designadas. Si necesitas una nueva carpeta, justifícala y actualiza la documentación.
 - **R0.4 — Optimización.** Escribe código eficiente por defecto: evita re-renders innecesarios (usa `React.memo`, `useMemo`, `useCallback` cuando corresponda), no hagas fetch duplicados, y usa listas virtualizadas (`FlatList`) para conjuntos grandes. No optimices prematuramente, pero no introduzcas ineficiencias obvias.
-- **R0.5 — Vanguardia.** Usa las versiones estables más recientes del stack (Expo SDK 54, React Native 0.81, TypeScript 5.6+). No uses APIs deprecadas. Si una librería del stack tiene una alternativa moderna oficial, úsala.
+- **R0.5 — Vanguardia.** El proyecto está en Expo SDK 58, React Native 0.88, React 19.3.0 y TypeScript 6. No bajes a SDK 54 ni subas React a 19.3.1. No uses APIs deprecadas. Si una librería del stack tiene una alternativa moderna oficial, úsala.
 - **R0.6 — Documentación oficial.** Antes de implementar algo que no domines, consulta la documentación oficial de Expo, React Native, Supabase o TypeScript. No inventes APIs ni importes helpers que no existan. Si no estás seguro, pregunta al usuario en lugar de asumir[reference:2].
 
 ---

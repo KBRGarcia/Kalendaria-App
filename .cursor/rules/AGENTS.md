@@ -2,7 +2,7 @@
 
 > **Propósito:** Este archivo es la fuente de verdad para cualquier agente de IA (Cursor, Claude Code, etc.) que trabaje en Kalendaria. Léelo completo antes de generar, modificar o eliminar código.
 >
-> **Stack:** Expo SDK 54, React Native 0.81, Expo Router, TypeScript estricto, Zustand, Supabase (Auth + PostgreSQL + RLS), AsyncStorage.
+> **Stack:** Expo SDK 58, React Native 0.88, React 19.3.0, Expo Router, TypeScript 6 estricto, Zustand, Supabase (Auth + PostgreSQL + RLS), AsyncStorage y SecureStore para la sesión. Node.js 22.x (mínimo 22.13).
 >
 > **Documentos de referencia obligatoria:** `docs/01-PRD.md`, `docs/02-TRD.md`, `docs/04-UIUX-Brief.md`, `docs/05-Backend-Schema.md`, `docs/06-Implementation-Plan.md`.
 
@@ -16,7 +16,7 @@ Estas reglas son la base de cualquier contribución. No son opcionales.
 - **R0.2 — Código limpio.** Prioriza la legibilidad sobre la brevedad. Nombra variables y funciones de forma descriptiva. Evita comentarios que expliquen *qué* hace el código; usa comentarios solo para explicar *por qué* se tomó una decisión no obvia. Mantén funciones cortas (idealmente < 30 líneas, máximo 50)[reference:1].
 - **R0.3 — Archivos ordenados.** Respeta estrictamente la estructura de carpetas definida en `02-TRD.md` (sección 3.1) y `06-Implementation-Plan.md` (Fase 0). No crees archivos fuera de las carpetas designadas. Si necesitas una nueva carpeta, justifícala y actualiza la documentación.
 - **R0.4 — Optimización.** Escribe código eficiente por defecto: evita re-renders innecesarios (usa `React.memo`, `useMemo`, `useCallback` cuando corresponda), no hagas fetch duplicados, y usa listas virtualizadas (`FlatList`) para conjuntos grandes. No optimices prematuramente, pero no introduzcas ineficiencias obvias.
-- **R0.5 — Vanguardia.** Usa las versiones estables más recientes del stack (Expo SDK 54, React Native 0.81, TypeScript 5.6+). No uses APIs deprecadas. Si una librería del stack tiene una alternativa moderna oficial, úsala.
+- **R0.5 — Vanguardia.** El proyecto está en Expo SDK 58, React Native 0.88, React 19.3.0 y TypeScript 6. No bajes a SDK 54 ni subas React a 19.3.1. No uses APIs deprecadas. Si una librería del stack tiene una alternativa moderna oficial, úsala.
 - **R0.6 — Documentación oficial.** Antes de implementar algo que no domines, consulta la documentación oficial de Expo, React Native, Supabase o TypeScript. No inventes APIs ni importes helpers que no existan. Si no estás seguro, pregunta al usuario en lugar de asumir[reference:2].
 
 ---
@@ -51,7 +51,7 @@ Estas reglas son la base de cualquier contribución. No son opcionales.
 - **R3.5 — Memoización selectiva.** Aplica `React.memo` a componentes de lista (`DayCell`, `ActivityCard`) y `useMemo`/`useCallback` cuando un cálculo o callback se pase como prop a un componente memoizado.
 - **R3.6 — `FlatList` para listas.** Nunca uses `ScrollView` con `.map()` para listas de datos. Usa `FlatList` o `FlashList` (si se añade después) para virtualización.
 - **R3.7 — Safe areas.** Usa `react-native-safe-area-context` (`SafeAreaView` o `useSafeAreaInsets`) en todas las pantallas. No asumas que el notch o el home indicator no existen.
-- **R3.8 — Iconos.** Usa `@expo/vector-icons` (Ionicons). No importes iconos de librerías externas no aprobadas.
+- **R3.8 — Iconos.** El set previsto es Ionicons. No instales `@expo/vector-icons`: la guía oficial de Expo lo marca como deprecado. Antes de la primera pantalla con iconos, confirma el paquete con el usuario. No añadas otra librería de iconos por tu cuenta.
 
 ---
 

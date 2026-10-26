@@ -378,6 +378,8 @@ export const supabase = createClient(
   }
 );
 
+Decisión de Fase 0: este adaptador se mantiene. La guía rápida de Supabase para Expo (octubre 2026) usa `expo-sqlite/localStorage` y `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Aquí la sesión va en SecureStore y la clave sigue llamándose `EXPO_PUBLIC_SUPABASE_ANON_KEY`. No sustituyas ninguna de las dos cosas sin decidirlo antes. No importes este módulo en el layout mientras el `.env.local` esté vacío.
+
 --- 
 
 ## 6. Tipos TypeScript (generados por Supabase)

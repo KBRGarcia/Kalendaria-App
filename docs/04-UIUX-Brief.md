@@ -332,7 +332,7 @@ Dot (punto de categoría):
 ---
 
 ## 6. Iconografía
-- Set: Ionicons (vía @expo/vector-icons).
+- Set: Ionicons. `@expo/vector-icons` está deprecado en la guía de iconos de Expo; no instalarlo. El paquete se elige antes de implementar iconos.
 - Estilo: outline por defecto, filled en estados activos.
 - Tamaño estándar: 22px en navegación, 20px en inputs, 24-28px en acciones principales.
 - Iconos clave:

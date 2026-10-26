@@ -1,15 +1,5 @@
-import { useTheme } from 'expo-router';
-import { StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { Redirect } from 'expo-router';
 
 export default function Index() {
-  const theme = useTheme();
-
-  return <SafeAreaView style={[styles.screen, { backgroundColor: theme.colors.background }]} />;
+  return <Redirect href="/login" />;
 }
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
-});

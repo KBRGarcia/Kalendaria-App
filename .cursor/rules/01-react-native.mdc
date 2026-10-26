@@ -11,7 +11,7 @@ alwaysApply: true
 - **R3.5 — Memoización selectiva.** Aplica `React.memo` a componentes de lista (`DayCell`, `ActivityCard`) y `useMemo`/`useCallback` cuando un cálculo o callback se pase como prop a un componente memoizado.
 - **R3.6 — `FlatList` para listas.** Nunca uses `ScrollView` con `.map()` para listas de datos. Usa `FlatList` o `FlashList` (si se añade después) para virtualización.
 - **R3.7 — Safe areas.** Usa `react-native-safe-area-context` (`SafeAreaView` o `useSafeAreaInsets`) en todas las pantallas. No asumas que el notch o el home indicator no existen.
-- **R3.8 — Iconos.** Usa `@expo/vector-icons` (Ionicons). No importes iconos de librerías externas no aprobadas.
+- **R3.8 — Iconos.** El set previsto es Ionicons. No instales `@expo/vector-icons`: la guía oficial de Expo lo marca como deprecado. Antes de la primera pantalla con iconos, confirma el paquete con el usuario. No añadas otra librería de iconos por tu cuenta.
 
 ---
 

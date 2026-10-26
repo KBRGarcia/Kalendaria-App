@@ -347,7 +347,7 @@ El usuario necesita recordar fechas importantes (reuniones, pendientes) y regist
 - **Supuesto:** El usuario tiene conexión a internet la mayor parte del tiempo para las operaciones de escritura.
 - **Supuesto:** El usuario tiene un correo electrónico activo para la verificación.
 - **Dependencia:** Supabase (Auth + PostgreSQL + API REST).
-- **Dependencia:** Expo SDK 54 + React Native 0.81.
+- **Dependencia:** Expo SDK 58 + React Native 0.88. Node.js 22.x (mínimo 22.13).
 
 ---
 
