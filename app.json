@@ -32,7 +32,8 @@
           "backgroundColor": "#E6F4FE",
           "image": "./assets/splash-icon.png"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "experiments": {
       "typedRoutes": true,
