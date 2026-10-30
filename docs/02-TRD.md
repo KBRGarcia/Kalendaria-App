@@ -101,7 +101,7 @@ Fase 0 dejó creados `src/app/_layout.tsx`, `src/app/index.tsx` y `src/app/(auth
 | Paquete | Rol |
 |---|---|
 | `date-fns` | Manipulación de fechas (formato, comparación, locale `es`) |
-| Ionicons | Iconografía prevista. No instalar `@expo/vector-icons`: la guía de iconos de Expo lo marca como deprecado. El paquete sustituto se elige antes de la primera pantalla con iconos. |
+| Ionicons | `@react-native-vector-icons/ionicons`. Expo recomienda este paquete desde SDK 56 y marca `@expo/vector-icons` como no recomendado. |
 | `expo-status-bar` | Control de la barra de estado del sistema |
 
 ### 2.7. Funcionalidades nativas (Expo modules)
@@ -141,6 +141,7 @@ Kalendaria/
 │   │   └── (app)/
 │   ├── components/               # Componentes reutilizables
 │   │   ├── ui/                   # Botones, inputs, modales base
+│   │   ├── auth/                 # Pantallas de registro, login y verificación
 │   │   ├── calendar/             # MonthGrid, DayCell, ActivityDot
 │   │   └── activity/             # ActivityCard, CategoryPicker, ActivityForm
 │   ├── constants/
@@ -210,7 +211,8 @@ Alias de paths configurados en tsconfig.json:
   "@services/*": ["./src/services/*"],
   "@theme/*": ["./src/theme/*"],
   "@lib/*": ["./src/lib/*"],
-  "@types/*": ["./src/types/*"]
+  "@types/*": ["./src/types/*"],
+  "@constants/*": ["./src/constants/*"]
 }
 
 ### 3.4. Variables de entorno
@@ -236,18 +238,21 @@ Se accede vía process.env.EXPO_PUBLIC_SUPABASE_URL desde el código.
 8. Si es correcto, se crea la sesión y se redirige a /(app)/calendar.
 
 ### 4.2. Flujo de login con "confianza por tiempo"
-Regla de negocio: si el último login fue hace < 30 días, no se pide OTP.
+Regla de negocio: si el último login fue hace menos de 30 días, no se pide OTP. Si `last_login_at` es null, tampoco: el registro ya verificó el correo.
+
+RLS solo deja leer `profiles` del usuario autenticado, así que la consulta va después de validar la contraseña.
+
 1. Usuario ingresa email + password.
-2. Se consulta last_login_at del usuario (guardado en tabla profiles o auth.users.last_sign_in_at).
-3. Si now - last_login_at < 30 días:
-- Se llama supabase.auth.signInWithPassword({ email, password }).
-- Se redirige directo a /(app)/calendar.
-4. Si now - last_login_at >= 30 días:
-- Se llama supabase.auth.signInWithPassword (validación de credenciales).
-- Se llama supabase.auth.signInWithOtp({ email }) para enviar código.
-- Se navega a /(auth)/verify?email=xxx&mode=login.
-- Al verificar, se redirige a la app.
-5. Se actualiza last_login_at tras login exitoso.
+2. Se llama `supabase.auth.signInWithPassword({ email, password })`.
+3. Se lee `profiles.last_login_at`.
+4. Si es null o han pasado menos de 30 días:
+- Se llama `update_last_login`.
+- Se redirige a `/(app)/calendar`.
+5. Si han pasado 30 días o más:
+- Se cierra la sesión que acaba de abrir la contraseña, para que el guard no deje entrar.
+- Se llama `supabase.auth.signInWithOtp({ email })`.
+- Se navega a `/(auth)/verify?email=xxx&mode=login`.
+- Al verificar con `type: 'email'`, se actualiza `last_login_at` y se entra en la app.
 
 ### 4.3. Persistencia de sesión
 - El cliente de `src/lib/supabase.ts` guarda la sesión en `expo-secure-store` y lee `EXPO_PUBLIC_SUPABASE_URL` y `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
@@ -566,6 +571,6 @@ Resueltas con `npx expo install` para SDK 58. No vuelvas a fijar las versiones d
 }
 ```
 
-ESLint y Prettier todavía no están instalados. `@expo/vector-icons` tampoco: no lo añadas.
+ESLint y Prettier todavía no están instalados. Los iconos van en `@react-native-vector-icons/ionicons`. No añadas `@expo/vector-icons`.
 
 

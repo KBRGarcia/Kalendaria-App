@@ -1,15 +1,5 @@
-import { useTheme } from 'expo-router';
-import { StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { LoginScreen } from '@components/auth/LoginScreen';
 
-export default function Login() {
-  const theme = useTheme();
-
-  return <SafeAreaView style={[styles.screen, { backgroundColor: theme.colors.background }]} />;
+export default function LoginRoute() {
+  return <LoginScreen />;
 }
-
-const styles = StyleSheet.create({
-  screen: {
-    flex: 1,
-  },
-});

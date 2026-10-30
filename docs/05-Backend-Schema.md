@@ -294,38 +294,36 @@ En Authentication → Rate Limits:
    
 ### 5.3. Flujo de Login con "confianza por tiempo"
 
+RLS impide leer `last_login_at` antes de autenticarse. El cliente valida la contraseña, lee el perfil y solo entonces decide si hace falta OTP. Si hace falta, cierra esa sesión antes de enviar el código: si no, el guard de `/(app)` dejaría entrar sin verificar.
+
 [Cliente]                             [Supabase]
    │                                      │
-   │ (1) Consulta last_login_at de profiles
+   │ signInWithPassword({ email, pass })  │
    ├─────────────────────────────────────►│
    │◄─────────────────────────────────────┤
-   │  { last_login_at }                   │
+   │  { user, session }                   │
    │                                      │
-   │ ¿now - last_login_at < 30 días?      │
+   │ select last_login_at                 │
+   ├─────────────────────────────────────►│
+   │◄─────────────────────────────────────┤
+   │                                      │
+   │ ¿last_login_at es null o < 30 días?  │
    │                                      │
    │ ─── SÍ ───                           │
-   │  signInWithPassword({ email, pass }) │
+   │  update_last_login()                 │
    ├─────────────────────────────────────►│
-   │◄─────────────────────────────────────┤
-   │  { user, session }                   │
    │  → Navegar a /(app)/calendar         │
    │                                      │
-   │ ─── NO ───                           │
-   │  signInWithPassword (validar pass)   │
-   ├─────────────────────────────────────►│
-   │◄─────────────────────────────────────┤
-   │  { user, session }                   │
+   │ ─── NO (30 días o más) ───           │
+   │  signOut (scope local)               │
    │  signInWithOtp({ email })            │
    ├─────────────────────────────────────►│
-   │◄─────────────────────────────────────┤
-   │  (email enviado)                     │
    │  → Navegar a /(auth)/verify?mode=login│
    │                                      │
    │  verifyOtp({ email, token,           │
    │    type: 'email' })                  │
    ├─────────────────────────────────────►│
-   │◄─────────────────────────────────────┤
-   │  (actualizar last_login_at vía RPC)  │
+   │  update_last_login()                 │
    │  → Navegar a /(app)/calendar         │
    
 ### 5.4. Función RPC para actualizar last_login_at

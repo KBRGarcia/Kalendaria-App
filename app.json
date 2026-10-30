@@ -17,7 +17,8 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "package": "com.anonymous.kalendaria"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -33,7 +34,8 @@
           "image": "./assets/splash-icon.png"
         }
       ],
-      "expo-font"
+      "expo-font",
+      "@react-native-vector-icons/ionicons"
     ],
     "experiments": {
       "typedRoutes": true,

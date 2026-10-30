@@ -13,8 +13,11 @@ import {
   type Theme,
 } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect, useMemo } from 'react';
 
+import { AppErrorBoundary } from '@components/ui/AppErrorBoundary';
+import { useAuthInitialized, useAuthLifecycle } from '@hooks/useAuth';
 import { useThemeHydrated } from '@store/themeStore';
 import type { ColorScheme, ThemeColors } from '@theme/colors';
 import { ThemeProvider, useTheme } from '@theme/ThemeProvider';
@@ -32,7 +35,8 @@ const interFonts = {
 function useAppReady(): boolean {
   const [fontsLoaded, fontError] = useFonts(interFonts);
   const themeHydrated = useThemeHydrated();
-  const ready = (fontsLoaded || fontError !== null) && themeHydrated;
+  const authReady = useAuthInitialized();
+  const ready = (fontsLoaded || fontError !== null) && themeHydrated && authReady;
 
   useEffect(() => {
     if (!fontError || !__DEV__) {
@@ -79,6 +83,7 @@ function ThemedNavigation() {
 
   return (
     <NavigationThemeProvider value={navigationTheme}>
+      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false }} />
     </NavigationThemeProvider>
   );
@@ -86,6 +91,7 @@ function ThemedNavigation() {
 
 export default function RootLayout() {
   const ready = useAppReady();
+  useAuthLifecycle();
 
   if (!ready) {
     return null;
@@ -93,7 +99,9 @@ export default function RootLayout() {
 
   return (
     <ThemeProvider>
-      <ThemedNavigation />
+      <AppErrorBoundary>
+        <ThemedNavigation />
+      </AppErrorBoundary>
     </ThemeProvider>
   );
 }

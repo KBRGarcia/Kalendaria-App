@@ -11,7 +11,8 @@
       "@services/*": ["./src/services/*"],
       "@theme/*": ["./src/theme/*"],
       "@lib/*": ["./src/lib/*"],
-      "@types/*": ["./src/types/*"]
+      "@types/*": ["./src/types/*"],
+      "@constants/*": ["./src/constants/*"]
     }
   },
   "include": [

@@ -12,6 +12,25 @@ Scripts de `docs/05-Backend-Schema.md`, sección 9. No incluyen claves ni datos 
 
 La app no usa `service_role`. El cliente ya lee `EXPO_PUBLIC_SUPABASE_URL` y `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
 
+## Correo de verificación
+
+En el proyecto alojado, Authentication → Email:
+
+- Proveedor Email activo y altas por correo activadas.
+- Confirm email activado.
+- OTP de 6 dígitos y caducidad de 600 segundos.
+
+Las plantillas tienen que incluir `{{ .Token }}`. Si solo llevan el enlace, la pantalla de código no puede completar el registro ni el login de más de 30 días.
+
+- Confirm signup: asunto `Tu código de Kalendaria`, cuerpo `supabase/templates/confirmation.html`.
+- Magic Link: asunto `Tu código de acceso a Kalendaria`, cuerpo `supabase/templates/magic_link.html`.
+
+Página del proyecto: `https://supabase.com/dashboard/project/elqztqfepmnbfaqqyxyl/auth/templates`.
+
+El enlace del correo que ya se envió no cambia. Después de guardar las plantillas hay que pedir otro código desde la app.
+
+Esas dos plantillas salen de la guía de plantillas de Supabase: el registro usa Confirm signup y `signInWithOtp` usa Magic Link.
+
 ## Orden
 
 Ejecuta cada archivo entero, uno detrás de otro (*Execute SQL Script*). Si uno falla, no sigas.
