@@ -3,6 +3,8 @@ import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
 
+import type { Database } from '@/types/database';
+
 const secureStoreAdapter = {
   getItem(key: string): Promise<string | null> {
     return SecureStore.getItemAsync(key);
@@ -23,7 +25,7 @@ function readPublicEnv(name: 'EXPO_PUBLIC_SUPABASE_URL' | 'EXPO_PUBLIC_SUPABASE_
   return value;
 }
 
-export const supabase = createClient(
+export const supabase = createClient<Database>(
   readPublicEnv('EXPO_PUBLIC_SUPABASE_URL'),
   readPublicEnv('EXPO_PUBLIC_SUPABASE_ANON_KEY'),
   {
