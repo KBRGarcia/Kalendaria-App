@@ -12,24 +12,13 @@ Scripts de `docs/05-Backend-Schema.md`, sección 9. No incluyen claves ni datos 
 
 La app no usa `service_role`. El cliente ya lee `EXPO_PUBLIC_SUPABASE_URL` y `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
 
-## Correo de verificación
+## Correo
 
-En el proyecto alojado, Authentication → Email:
+Confirm email debe estar **desactivado**. El plan gratuito no permite editar Confirm signup ni Magic Link, y la app no pide un código.
 
-- Proveedor Email activo y altas por correo activadas.
-- Confirm email activado.
-- OTP de 6 dígitos y caducidad de 600 segundos.
+Las plantillas de `supabase/templates/` quedan guardadas para cuando haya plan de pago. No se usan ahora.
 
-Las plantillas tienen que incluir `{{ .Token }}`. Si solo llevan el enlace, la pantalla de código no puede completar el registro ni el login de más de 30 días.
-
-- Confirm signup: asunto `Tu código de Kalendaria`, cuerpo `supabase/templates/confirmation.html`.
-- Magic Link: asunto `Tu código de acceso a Kalendaria`, cuerpo `supabase/templates/magic_link.html`.
-
-Página del proyecto: `https://supabase.com/dashboard/project/elqztqfepmnbfaqqyxyl/auth/templates`.
-
-El enlace del correo que ya se envió no cambia. Después de guardar las plantillas hay que pedir otro código desde la app.
-
-Esas dos plantillas salen de la guía de plantillas de Supabase: el registro usa Confirm signup y `signInWithOtp` usa Magic Link.
+Página del proyecto: `https://supabase.com/dashboard/project/elqztqfepmnbfaqqyxyl/auth/providers`.
 
 ## Orden
 

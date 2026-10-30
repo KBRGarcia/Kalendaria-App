@@ -7,7 +7,6 @@ import { Button } from '@components/ui/Button';
 import { Input } from '@components/ui/Input';
 import { useAuth } from '@hooks/useAuth';
 import { toUserMessage } from '@services/authErrors';
-import { normalizeEmail } from '@services/authValidation';
 import { spacing } from '@theme/spacing';
 import { useTheme } from '@theme/ThemeProvider';
 
@@ -25,10 +24,7 @@ export function LoginScreen(): ReactElement {
     setErrorMessage(null);
 
     try {
-      const result = await signIn(email, password);
-      if (result.requiresOtp) {
-        router.push({ pathname: '/verify', params: { email: normalizeEmail(email), mode: 'login' } });
-      }
+      await signIn(email, password);
     } catch (error) {
       setErrorMessage(toUserMessage(error));
     }

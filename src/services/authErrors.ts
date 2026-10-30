@@ -7,7 +7,6 @@ const messagesByCode: Record<string, string> = {
   email_not_confirmed: authMessages.emailNotConfirmed,
   user_already_exists: authMessages.duplicateEmail,
   email_exists: authMessages.duplicateEmail,
-  otp_expired: authMessages.invalidOtp,
   weak_password: authMessages.weakPassword,
   over_request_rate_limit: authMessages.rateLimit,
   over_email_send_rate_limit: authMessages.rateLimit,

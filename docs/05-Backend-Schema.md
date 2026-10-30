@@ -69,7 +69,7 @@ Kalendaria utiliza **Supabase** como backend. El esquema se compone de:
 
 ### 3.1. Propósito
 
-Extiende `auth.users` con datos específicos de la app que no pertenecen al sistema de autenticación: preferencia de tema, último login personalizado (para la regla de los 30 días), etc.
+Extiende `auth.users` con datos específicos de la app que no pertenecen al sistema de autenticación: preferencia de tema y último acceso.
 
 ### 3.2. Definición SQL
 
@@ -93,16 +93,15 @@ CREATE UNIQUE INDEX profiles_id_idx ON public.profiles(id);
 Columna   |   Tipo   |   Nulo   |   Default   |   Descripción
 id   |   uuid   |   NO   |   —   |   PK, FK a auth.users.id. Mismo UUID que el usuario.
 email   |   text   |   NO   |   —   |   Copia del email del usuario. Denormalizado por conveniencia.
-last_login_at   |   timestamptz   |   SÍ   |   NULL   |   Último login verificado con éxito (para la regla de 30 días).
+last_login_at   |   timestamptz   |   SÍ   |   NULL   |   Último acceso con sesión. Se guarda para el código de correo, cuando vuelva.
 theme_preference	   |   text   |   NO   |   'system'   |   Preferencia de tema. Solo 'light', 'dark' o 'system'.
 created_at   |   timestamptz   |   NO   |   now()   |   Fecha de creación del perfil.
 updated_at   |   timestamptz   |   NO   |   now()   |   Fecha de última modificación.
 
 ### 3.4. Reglas de negocio asociadas
 
-- last_login_at se actualiza cada vez que un login se completa con éxito (con o sin OTP adicional).
-- La regla de los 30 días se evalúa antes del login: now() - last_login_at >= 30 días → requiere OTP.
-- Si last_login_at es NULL (usuario nuevo que nunca inició sesión), no se requiere OTP adicional (el registro ya verificó por OTP).
+- last_login_at se actualiza al completar el registro o el login con sesión.
+- La regla de los 30 días y el código de correo no se aplican. Vuelven con el plan de pago.
 
 ### 3.5. Políticas RLS
 
@@ -253,18 +252,17 @@ EXECUTE FUNCTION public.set_updated_at();
 En Authentication → Providers → Email:
 
 - ✅ Enable Email provider.
-- ✅ Confirm email: activado (obliga a verificar por OTP antes de poder iniciar sesión).
+- ❌ Confirm email: desactivado. El plan gratuito no permite editar las plantillas, y la app no pide código.
 - ❌ Secure email change: desactivado en MVP (no hay cambio de email).
-- ✅ Email OTP expiration: 600 segundos (10 minutos).
-- ✅ Email OTP length: 6 dígitos.
-- ❌ Enable email signups: ✅ activado.
+- ✅ Enable email signups: activado.
 - ❌ Enable phone signups: desactivado.
 - ❌ Anonymous sign-ins: desactivado.
 
 En Authentication → Rate Limits:
 
 - Mantener los valores por defecto de Supabase.
-- Máximo 4 emails por hora por usuario para prevenir abuso de OTP.
+
+El código de 6 dígitos y la caducidad de 600 segundos se configuran cuando haya plan de pago.
 
 ### 5.2. Flujo de Registro
 
@@ -273,28 +271,18 @@ En Authentication → Rate Limits:
    │ signUp({ email, password })          │
    ├─────────────────────────────────────►│
    │                                      │ 1. Crea usuario en auth.users
-   │                                      │    (estado: unconfirmed)
+   │                                      │    (confirmado, sin correo)
    │                                      │ 2. Trigger crea fila en profiles
-   │                                      │ 3. Envía OTP al email
-   │◄─────────────────────────────────────┤
-   │  { user, session: null }             │
-   │                                      │
-   │ (App navega a /(auth)/verify)        │
-   │                                      │
-   │ verifyOtp({ email, token,            │
-   │   type: 'signup' })                  │
-   ├─────────────────────────────────────►│
-   │                                      │ 4. Valida OTP
-   │                                      │ 5. Marca usuario como confirmed
-   │                                      │ 6. Actualiza last_login_at
    │◄─────────────────────────────────────┤
    │  { user, session }                   │
    │                                      │
+   │ update_last_login()                  │
+   ├─────────────────────────────────────►│
    │ (App navega a /(app)/calendar)       │
-   
-### 5.3. Flujo de Login con "confianza por tiempo"
 
-RLS impide leer `last_login_at` antes de autenticarse. El cliente valida la contraseña, lee el perfil y solo entonces decide si hace falta OTP. Si hace falta, cierra esa sesión antes de enviar el código: si no, el guard de `/(app)` dejaría entrar sin verificar.
+Si Confirm email sigue activo, la respuesta trae `session: null`. La app muestra el error y no abre pantalla de código.
+
+### 5.3. Flujo de Login
 
 [Cliente]                             [Supabase]
    │                                      │
@@ -303,28 +291,11 @@ RLS impide leer `last_login_at` antes de autenticarse. El cliente valida la cont
    │◄─────────────────────────────────────┤
    │  { user, session }                   │
    │                                      │
-   │ select last_login_at                 │
-   ├─────────────────────────────────────►│
-   │◄─────────────────────────────────────┤
-   │                                      │
-   │ ¿last_login_at es null o < 30 días?  │
-   │                                      │
-   │ ─── SÍ ───                           │
-   │  update_last_login()                 │
+   │ update_last_login()                  │
    ├─────────────────────────────────────►│
    │  → Navegar a /(app)/calendar         │
-   │                                      │
-   │ ─── NO (30 días o más) ───           │
-   │  signOut (scope local)               │
-   │  signInWithOtp({ email })            │
-   ├─────────────────────────────────────►│
-   │  → Navegar a /(auth)/verify?mode=login│
-   │                                      │
-   │  verifyOtp({ email, token,           │
-   │    type: 'email' })                  │
-   ├─────────────────────────────────────►│
-   │  update_last_login()                 │
-   │  → Navegar a /(app)/calendar         │
+
+No hay código ni regla de 30 días. `last_login_at` solo se registra.
    
 ### 5.4. Función RPC para actualizar last_login_at
 
@@ -566,30 +537,16 @@ async function remove(id: string): Promise<void> {
   if (error) throw error;
 }
 
-### 7.5. authService.getLastLogin
+### 7.5. authService.updateLastLogin
 
-async function getLastLogin(): Promise<string | null> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return null;
-
-  const { data, error } = await supabase
-    .from('profiles')
-    .select('last_login_at')
-    .eq('id', user.id)
-    .single();
-
-  if (error) throw error;
-  return data?.last_login_at ?? null;
-}
-
-### 7.6. authService.updateLastLogin
+El cliente no lee `last_login_at` para decidir el acceso. Tras un registro o un login con sesión llama a la RPC:
 
 async function updateLastLogin(): Promise<void> {
   const { error } = await supabase.rpc('update_last_login');
   if (error) throw error;
 }
 
-### 7.7. authService.updateThemePreference
+### 7.6. authService.updateThemePreference
 
 async function updateThemePreference(
   pref: 'light' | 'dark' | 'system'
@@ -678,7 +635,7 @@ Anon key expuesta en cliente   |   ✅ (por diseño; RLS protege los datos)
 Service role key en cliente   |   ❌ NUNCA
 Validación de inputs en cliente   |   ✅
 Validación de inputs en servidor (CHECK)   |   ✅
-Rate limiting en OTP   |   ✅ (Supabase por defecto)
+Rate limiting de Auth   |   ✅ (Supabase por defecto)
 
 ---
 
@@ -743,7 +700,7 @@ Este plan define **la secuencia exacta** en la que se debe construir la app. Cad
 | 0 | Setup del proyecto | 1-2 h | Ninguno |
 | 1 | Configuración de Supabase | 1-2 h | Fase 0 |
 | 2 | Sistema de temas y design tokens | 2-3 h | Fase 0 |
-| 3 | Autenticación (registro, login, OTP) | 6-8 h | Fases 1, 2 |
+| 3 | Autenticación (registro y login) | 6-8 h | Fases 1, 2 |
 | 4 | Vista de Calendario Mensual | 6-8 h | Fase 3 |
 | 5 | Vista de Detalle del Día | 3-4 h | Fase 4 |
 | 6 | CRUD de Actividades (crear, editar, eliminar) | 6-8 h | Fase 5 |

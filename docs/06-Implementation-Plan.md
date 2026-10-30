@@ -61,10 +61,8 @@ Tener el backend funcional: proyecto en Supabase, tablas creadas, RLS activo, y 
 
 3. Configurar Auth:
 - Email provider activo.
-- Confirm email activado.
-- OTP expiry: 600 segundos.
-- OTP length: 6.
-- Personalizar template del email con branding "Kalendaria".
+- Confirm email desactivado.
+- Altas por correo activadas.
 
 4. Generar tipos TypeScript:
 npx supabase gen types typescript --project-id <id> > src/types/database.ts
@@ -147,25 +145,25 @@ feat(theme): add design system with light/dark themes
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-# FASE 3 — Autenticación (Registro, Login, OTP)
+# FASE 3 — Autenticación (Registro y login)
+
+Decisión de octubre 2026: no hay código de 6 dígitos ni regla de 30 días. El plan gratuito no deja editar las plantillas de correo. El acceso es correo y contraseña. El código vuelve con el plan de pago.
 
 ## Objetivo
-Flujo completo de autenticación funcional: registro con OTP, login con regla de 30 días, cierre de sesión, guard de rutas protegidas.
+Registro, login, cierre de sesión y guard de rutas protegidas, sin verificación por correo.
 
 ## Entregable
-- Pantallas: login.tsx, register.tsx, verify.tsx.
+- Pantallas: login.tsx y register.tsx.
 - authStore con Zustand.
-- authService con todas las operaciones.
+- authService con registro, login y cierre de sesión.
 - Guard en src/app/(app)/_layout.tsx que redirige a login si no hay sesión.
 - Redirect automático en src/app/index.tsx según estado de sesión.
 
 ## Tareas
 1. Implementar authService.ts:
 - signUp(email, password)
-- signIn(email, password) → devuelve { requiresOtp: boolean }
-- verifyOtp(email, token, mode)
+- signIn(email, password)
 - signOut()
-- getLastLogin()
 - updateLastLogin()
 - getSession()
 - onAuthStateChange() (suscripción)
@@ -178,7 +176,6 @@ Flujo completo de autenticación funcional: registro con OTP, login con regla de
 3. Crear componentes UI base (reutilizables):
 - Button (variantes: primary, secondary, text, destructive).
 - Input (con label, icono, estado error).
-- OtpInput (6 cajas auto-avance).
 - Loading (spinner centrado).
 
 4. Implementar src/app/(auth)/_layout.tsx:
@@ -186,32 +183,27 @@ Flujo completo de autenticación funcional: registro con OTP, login con regla de
 
 5. Implementar src/app/(auth)/login.tsx según 04-UIUX-Brief.md sección 7.2.
 6. Implementar src/app/(auth)/register.tsx según sección 7.3.
-7. Implementar src/app/(auth)/verify.tsx según sección 7.4.
-- Acepta params email y mode (signup | login).
 
-8. Implementar src/app/(app)/_layout.tsx:
-- Guard: si no hay sesión → <Redirect href="/(auth)/login" />.
+7. Implementar src/app/(app)/_layout.tsx:
+- Guard: si no hay sesión → redirect a login.
 
-9. Implementar src/app/index.tsx:
+8. Implementar src/app/index.tsx:
 - Si hay sesión → redirect a /(app)/calendar.
 - Si no → redirect a /(auth)/login.
 
-10. Implementar la lógica de los 30 días en login.tsx:
-- Consultar last_login_at antes de decidir el flujo.
-
-11. Probar los flujos completos:
-- Registro nuevo → recibe email → verifica → entra.
-- Login con last_login < 30 días → entra directo.
-- Login con last_login >= 30 días → pide OTP.
+9. Probar los flujos:
+- Registro nuevo → entra sin código.
+- Login con credenciales válidas → entra.
+- Login con credenciales inválidas → error genérico.
 - Logout → vuelve a login.
 - Cerrar y abrir la app → mantiene sesión.
 
-12. Commit:
-feat(auth): implement signup, login, OTP verification, and session management
+10. Commit:
+feat(auth): implement signup, login, and session management
 
 ## Criterio de "Done"
-- Todos los flujos funcionan end-to-end.
-- Los errores se muestran correctamente (email duplicado, código inválido, credenciales incorrectas).
+- Registro y login funcionan con correo y contraseña.
+- Los errores se muestran (correo ya registrado, contraseña débil, credenciales incorrectas).
 - La sesión persiste tras cerrar la app.
 - El guard de rutas funciona.
 
@@ -474,7 +466,7 @@ Revisar toda la app contra el checklist de diseño y accesibilidad, corregir det
 6. Probar estados de error:
 - Email ya registrado.
 - Contraseña débil.
-- Código OTP incorrecto o expirado.
+- Credenciales incorrectas.
 - Sin conexión.
 - Sesión expirada.
 

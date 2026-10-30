@@ -2,19 +2,15 @@ import type { Session, User } from '@supabase/supabase-js';
 import { create } from 'zustand';
 
 import * as authService from '@services/authService';
-import type { OtpMode, SignInResult } from '@/types/auth';
 
 interface AuthState {
   user: User | null;
   session: Session | null;
   isLoading: boolean;
   isInitialized: boolean;
-  pendingOtp: boolean;
   initialize: () => () => void;
-  signIn: (email: string, password: string) => Promise<SignInResult>;
+  signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
-  verifyOtp: (email: string, token: string, mode: OtpMode) => Promise<void>;
-  resendOtp: (email: string, mode: OtpMode) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -23,7 +19,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   session: null,
   isLoading: false,
   isInitialized: false,
-  pendingOtp: false,
 
   initialize: () => {
     let active = true;
@@ -50,7 +45,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       });
 
     const unsubscribe = authService.onAuthStateChange((session) => {
-      if (!active || get().isLoading || get().pendingOtp) {
+      if (!active || get().isLoading) {
         return;
       }
 
@@ -64,27 +59,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signIn: async (email, password) => {
-    set({ isLoading: true, pendingOtp: false });
+    set({ isLoading: true });
 
     try {
-      const result = await authService.signIn(email, password);
-      if (result.requiresOtp) {
-        set({ user: null, session: null, isLoading: false, pendingOtp: true });
-        return result;
-      }
-
+      await authService.signIn(email, password);
       const session = await authService.getSession();
-      set({ session, user: session?.user ?? null, isLoading: false, pendingOtp: false });
-      return result;
+      set({ session, user: session?.user ?? null, isLoading: false });
     } catch (error) {
       await clearLeakedSession();
-      set({ user: null, session: null, isLoading: false, pendingOtp: false });
+      set({ user: null, session: null, isLoading: false });
       throw error;
     }
   },
 
   signUp: async (email, password) => {
-    set({ isLoading: true, pendingOtp: false });
+    set({ isLoading: true });
 
     try {
       await authService.signUp(email, password);
@@ -92,32 +81,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       set({ session, user: session?.user ?? null, isLoading: false });
     } catch (error) {
       await clearLeakedSession();
-      set({ isLoading: false });
-      throw error;
-    }
-  },
-
-  verifyOtp: async (email, token, mode) => {
-    set({ isLoading: true });
-
-    try {
-      await authService.verifyOtp(email, token, mode);
-      const session = await authService.getSession();
-      set({ session, user: session?.user ?? null, isLoading: false, pendingOtp: false });
-    } catch (error) {
-      set({ isLoading: false });
-      throw error;
-    }
-  },
-
-  resendOtp: async (email, mode) => {
-    set({ isLoading: true });
-
-    try {
-      await authService.resendOtp(email, mode);
-      set({ isLoading: false });
-    } catch (error) {
-      set({ isLoading: false });
+      set({ user: null, session: null, isLoading: false });
       throw error;
     }
   },
@@ -127,7 +91,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     try {
       await authService.signOut();
-      set({ user: null, session: null, isLoading: false, pendingOtp: false });
+      set({ user: null, session: null, isLoading: false });
     } catch (error) {
       set({ isLoading: false });
       throw error;

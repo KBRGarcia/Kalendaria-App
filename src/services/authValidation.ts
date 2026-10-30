@@ -1,10 +1,9 @@
-import { authMessages, OTP_LENGTH, TRUSTED_LOGIN_MS } from '@constants/auth';
+import { authMessages } from '@constants/auth';
 
 import { AuthRequestError } from './authErrors';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const PASSWORD_PATTERN = /^(?=.*\p{L})(?=.*\d).{8,}$/u;
-const OTP_PATTERN = new RegExp(`^\\d{${OTP_LENGTH}}$`);
 
 export function normalizeEmail(email: string): string {
   return email.trim().toLowerCase();
@@ -42,23 +41,4 @@ export function assertRegistration(email: string, password: string, confirmPassw
   if (password !== confirmPassword) {
     throw new AuthRequestError(authMessages.passwordMismatch);
   }
-}
-
-export function assertOtp(token: string): void {
-  if (!OTP_PATTERN.test(token.trim())) {
-    throw new AuthRequestError(authMessages.incompleteOtp);
-  }
-}
-
-export function isStaleLogin(lastLoginAt: string | null, now = Date.now()): boolean {
-  if (lastLoginAt === null) {
-    return false;
-  }
-
-  const lastLoginMs = Date.parse(lastLoginAt);
-  if (Number.isNaN(lastLoginMs)) {
-    return true;
-  }
-
-  return now - lastLoginMs >= TRUSTED_LOGIN_MS;
 }

@@ -1,5 +1,5 @@
-import { SignedInHome } from '@components/auth/SignedInHome';
+import { CalendarScreen } from '@components/calendar/CalendarScreen';
 
 export default function CalendarRoute() {
-  return <SignedInHome />;
+  return <CalendarScreen />;
 }

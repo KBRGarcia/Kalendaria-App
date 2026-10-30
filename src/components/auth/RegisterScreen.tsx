@@ -27,10 +27,7 @@ export function RegisterScreen(): ReactElement {
 
     try {
       assertRegistration(normalizeEmail(email), password, confirmPassword);
-      const needsVerification = await signUp(email, password);
-      if (needsVerification) {
-        router.push({ pathname: '/verify', params: { email: normalizeEmail(email), mode: 'signup' } });
-      }
+      await signUp(email, password);
     } catch (error) {
       setErrorMessage(toUserMessage(error));
     }

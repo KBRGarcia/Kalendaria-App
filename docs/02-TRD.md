@@ -59,8 +59,7 @@ src/app/
 ├── (auth)/              # Autenticación
 │   ├── _layout.tsx
 │   ├── login.tsx
-│   ├── register.tsx
-│   └── verify.tsx       # Verificación por código
+│   └── register.tsx
 └── (app)/               # Rutas protegidas
     ├── _layout.tsx      # Guard de autenticación
     ├── calendar.tsx     # Calendario mensual (home)
@@ -91,10 +90,9 @@ Fase 0 dejó creados `src/app/_layout.tsx`, `src/app/index.tsx` y `src/app/(auth
 | `expo-secure-store` | Almacenamiento seguro del token de sesión |
 
 **Supabase** provee:
-- **Auth:** registro, login, verificación por OTP (código de 6 dígitos por email).
+- **Auth:** registro e inicio de sesión con correo y contraseña. El código de 6 dígitos queda fuera hasta el plan de pago.
 - **PostgreSQL:** base de datos relacional con RLS.
 - **API REST autogenerada:** sobre las tablas definidas.
-- **Email service integrado:** envío de códigos de verificación.
 
 ### 2.6. Utilidades
 
@@ -231,28 +229,17 @@ Se accede vía process.env.EXPO_PUBLIC_SUPABASE_URL desde el código.
 1. Usuario completa formulario (email + password + confirmación).
 2. Cliente valida formato localmente (regex email, password ≥ 8 caracteres con letra y número).
 3. Se llama supabase.auth.signUp({ email, password }).
-4. Supabase crea el usuario en estado "unverified" y envía OTP por email.
-5. App navega a /(auth)/verify?email=xxx.
-6. Usuario introduce el código de 6 dígitos.
-7. Se llama supabase.auth.verifyOtp({ email, token, type: 'signup' }).
-8. Si es correcto, se crea la sesión y se redirige a /(app)/calendar.
+4. Con Confirm email desactivado, Supabase devuelve sesión.
+5. Se actualiza last_login_at y se redirige a /(app)/calendar.
+6. Si Confirm email sigue activo y no hay sesión, la app muestra el error y no abre una pantalla de código.
 
-### 4.2. Flujo de login con "confianza por tiempo"
-Regla de negocio: si el último login fue hace menos de 30 días, no se pide OTP. Si `last_login_at` es null, tampoco: el registro ya verificó el correo.
-
-RLS solo deja leer `profiles` del usuario autenticado, así que la consulta va después de validar la contraseña.
-
+### 4.2. Flujo de login
 1. Usuario ingresa email + password.
-2. Se llama `supabase.auth.signInWithPassword({ email, password })`.
-3. Se lee `profiles.last_login_at`.
-4. Si es null o han pasado menos de 30 días:
-- Se llama `update_last_login`.
-- Se redirige a `/(app)/calendar`.
-5. Si han pasado 30 días o más:
-- Se cierra la sesión que acaba de abrir la contraseña, para que el guard no deje entrar.
-- Se llama `supabase.auth.signInWithOtp({ email })`.
-- Se navega a `/(auth)/verify?email=xxx&mode=login`.
-- Al verificar con `type: 'email'`, se actualiza `last_login_at` y se entra en la app.
+2. Se llama supabase.auth.signInWithPassword({ email, password }).
+3. Si las credenciales son válidas, se actualiza last_login_at y se redirige a /(app)/calendar.
+4. Si no, se muestra "Correo o contraseña incorrectos".
+
+El código de 6 dígitos y la regla de 30 días no forman parte del flujo actual. Vuelven cuando el plan de Supabase permita editar las plantillas.
 
 ### 4.3. Persistencia de sesión
 - El cliente de `src/lib/supabase.ts` guarda la sesión en `expo-secure-store` y lee `EXPO_PUBLIC_SUPABASE_URL` y `EXPO_PUBLIC_SUPABASE_ANON_KEY`.
@@ -262,10 +249,10 @@ RLS solo deja leer `profiles` del usuario autenticado, así que la consulta va d
 - `src/app/(app)/_layout.tsx` verifica sesión activa; si no hay, redirige a `/login`.
 
 ### 4.4. Configuración Supabase
-- Email templates: personalizar los correos de verificación con branding "Kalendaria".
-- OTP expiry: 600 segundos (10 minutos).
+- Confirm email: desactivado. El plan gratuito no deja editar las plantillas, así que no se envía código.
 - Password requirements: mínimo 8 caracteres (configurable en Supabase).
-- Rate limiting: dejar los valores por defecto de Supabase. 
+- Rate limiting: dejar los valores por defecto de Supabase.
+- El código de 6 dígitos se recupera al pasar a un plan que permita editar Confirm signup y Magic Link. 
 
 ---
 
@@ -373,9 +360,8 @@ interface AuthState {
   isLoading: boolean;
   // actions
   initialize: () => Promise<void>;
-  signIn: (email, password) => Promise<{ requiresOtp: boolean }>;
+  signIn: (email, password) => Promise<void>;
   signUp: (email, password) => Promise<void>;
-  verifyOtp: (email, token, mode) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -512,8 +498,7 @@ export const darkTheme = { ... };
 ## 16. Riesgos Técnicos y Mitigaciones
 
 Riesgo   |   Impacto   |   Mitigación
-Supabase Auth OTP puede caer en spam   |   Medio   |   Personalizar templates de email + dominio verificado.
-Rate limiting de Supabase en envíos de OTP   |   Medio   |   Mensajes claros al usuario; permitir reintentar tras espera.
+Confirm email activo bloquea el registro   |   Alto   |   Dejarlo desactivado hasta el plan de pago. La app avisa si la sesión no llega.
 Conflictos de caché local vs servidor   |   Bajo   |   Invalidar caché tras cada escritura y al iniciar sesión.
 Expo Router en fase de cambios   |   Bajo   |   Seguir documentación oficial; versión fija en package.json.
 Dependencia total de Supabase   |   Medio   |   Backend abstraído en services/; migrar sería factible.

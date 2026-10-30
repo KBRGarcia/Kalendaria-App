@@ -382,6 +382,9 @@ Layout similar al login:
 8. Enlace "¿Ya tienes cuenta? Inicia sesión".
 
 ### 7.4. Verificación por código
+
+Aplazada. El plan gratuito de Supabase no permite editar las plantillas, así que esta pantalla no forma parte del flujo actual. La especificación se conserva para cuando haya plan de pago.
+
 1. Botón retroceso.
 2. Icono mail-open-outline (48px, primary), centrado.
 3. Título "Verifica tu correo" (h1).

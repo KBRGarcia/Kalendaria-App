@@ -41,7 +41,7 @@ El usuario necesita recordar fechas importantes (reuniones, pendientes) y regist
 
 ### 2.1. Dentro del alcance (MVP)
 
-- Autenticación con correo y contraseña + verificación por código de 6 dígitos.
+- Autenticación con correo y contraseña. La verificación por código de 6 dígitos queda fuera del MVP: el plan gratuito de Supabase no permite editar las plantillas de correo. Volverá cuando haya plan de pago.
 - Vista de calendario mensual.
 - Vista de detalle de día.
 - Creación, edición y eliminación de actividades.
@@ -71,34 +71,29 @@ El usuario necesita recordar fechas importantes (reuniones, pendientes) y regist
 **Detalle:**
 - RF-01.1: El formulario de registro solicita: correo electrónico, contraseña y confirmación de contraseña.
 - RF-01.2: La contraseña debe tener mínimo 8 caracteres, al menos una letra y un número.
-- RF-01.3: Al enviar el formulario, se crea la cuenta en Supabase Auth y se envía automáticamente un **código de verificación de 6 dígitos** al correo indicado.
-- RF-01.4: El usuario debe introducir el código en una pantalla de verificación para activar la cuenta.
-- RF-01.5: Si el código es correcto, la cuenta queda verificada y el usuario accede a la app.
-- RF-01.6: Si el código es incorrecto, se muestra un error y se permite reintentar.
-- RF-01.7: El código de verificación tiene una vigencia de 10 minutos.
+- RF-01.3: Al enviar el formulario, se crea la cuenta en Supabase Auth y el usuario entra en la app.
+- RF-01.4: Si el correo ya tiene cuenta, se muestra ese error.
+- RF-01.5: Confirm email debe estar desactivado en Supabase. Si sigue activo, la app avisa y no deja la cuenta a medias en una pantalla de código.
 
 **Criterios de aceptación:**
 - [ ] Un usuario nuevo puede registrarse con email y contraseña.
-- [ ] Recibe el código de verificación en su correo.
-- [ ] Al introducir el código correcto, accede a la app.
-- [ ] Con un código incorrecto, ve un mensaje de error y puede reintentar.
+- [ ] Tras registrarse, entra en la app sin código de correo.
+- [ ] Con un correo ya registrado, ve un mensaje de error.
 
 ---
 
 ### RF-02: Autenticación — Inicio de sesión
 
-**Descripción:** El usuario puede iniciar sesión con su correo y contraseña. El sistema aplica una política de "confianza por tiempo" para decidir si requiere verificación adicional por código.
+**Descripción:** El usuario puede iniciar sesión con su correo y contraseña.
 
 **Detalle:**
 - RF-02.1: El formulario de login solicita: correo electrónico y contraseña.
-- RF-02.2: Si las credenciales son correctas **y** el último inicio de sesión fue hace **menos de 30 días**, el usuario entra directamente a la app.
-- RF-02.3: Si las credenciales son correctas **pero** el último inicio de sesión fue hace **30 días o más**, se envía un **código de verificación** al correo y se muestra la pantalla de verificación antes de permitir el acceso.
-- RF-02.4: Si las credenciales son incorrectas, se muestra un error genérico ("Correo o contraseña incorrectos") sin revelar cuál de los dos falló.
-- RF-02.5: La sesión persistente se guarda de forma segura en el dispositivo.
+- RF-02.2: Si las credenciales son correctas, el usuario entra en la app.
+- RF-02.3: Si las credenciales son incorrectas, se muestra un error genérico ("Correo o contraseña incorrectos") sin revelar cuál de los dos falló.
+- RF-02.4: La sesión persistente se guarda de forma segura en el dispositivo.
 
 **Criterios de aceptación:**
-- [ ] Login con credenciales válidas y última conexión reciente → acceso directo.
-- [ ] Login con credenciales válidas y última conexión antigua → se solicita código de verificación.
+- [ ] Login con credenciales válidas → acceso directo.
 - [ ] Login con credenciales inválidas → error genérico.
 
 ---
@@ -305,8 +300,8 @@ El usuario necesita recordar fechas importantes (reuniones, pendientes) y regist
 | ID | Historia | Prioridad |
 |---|---|---|
 | US-01 | Como usuario nuevo, quiero registrarme con mi correo y contraseña para tener mi propia agenda. | Alta |
-| US-02 | Como usuario, quiero verificar mi cuenta con un código enviado a mi correo para mayor seguridad. | Alta |
-| US-03 | Como usuario, quiero iniciar sesión rápidamente si me he conectado recientemente. | Alta |
+| US-02 | Como usuario, quiero entrar con mi correo y contraseña, sin un código extra. | Alta |
+| US-03 | Como usuario, quiero que la sesión se mantenga al cerrar y abrir la app. | Alta |
 | US-04 | Como usuario, quiero ver un calendario mensual con indicadores de colores para ubicar mis actividades de un vistazo. | Alta |
 | US-05 | Como usuario, quiero tocar un día y ver todas las actividades de ese día. | Alta |
 | US-06 | Como usuario, quiero crear una actividad con título, categoría y nota. | Alta |
@@ -321,6 +316,7 @@ El usuario necesita recordar fechas importantes (reuniones, pendientes) y regist
 
 ## 6. Fuera de Alcance (Backlog futuro)
 
+- Verificación por código de 6 dígitos. Queda para cuando el plan de Supabase permita editar las plantillas de correo.
 - Actividades recurrentes o semanales.
 - Notificaciones y recordatorios.
 - Categorías personalizables por el usuario.
@@ -345,7 +341,7 @@ El usuario necesita recordar fechas importantes (reuniones, pendientes) y regist
 ## 8. Supuestos y Dependencias
 
 - **Supuesto:** El usuario tiene conexión a internet la mayor parte del tiempo para las operaciones de escritura.
-- **Supuesto:** El usuario tiene un correo electrónico activo para la verificación.
+- **Supuesto:** El usuario tiene un correo para crear la cuenta. No se le pide un código de verificación.
 - **Dependencia:** Supabase (Auth + PostgreSQL + API REST).
 - **Dependencia:** Expo SDK 58 + React Native 0.88. Node.js 22.x (mínimo 22.13).
 
@@ -359,4 +355,4 @@ El usuario necesita recordar fechas importantes (reuniones, pendientes) y regist
 | **Categoría** | Clasificación de una actividad (Reunión, Pendiente, etc.) con un color asociado. |
 | **Caché local** | Almacenamiento temporal en el dispositivo para consulta offline. |
 | **RLS** | Row Level Security: política de Supabase que restringe el acceso a datos por usuario. |
-| **OTP** | One-Time Password: código de 6 dígitos enviado por correo para verificación. |
+| **OTP** | Código de 6 dígitos por correo. Fuera del MVP hasta el plan de pago de Supabase. |
