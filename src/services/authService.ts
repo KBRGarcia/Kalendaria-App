@@ -2,6 +2,7 @@ import type { Session } from '@supabase/supabase-js';
 
 import { authMessages } from '@constants/auth';
 import { supabase } from '@lib/supabase';
+import type { ThemePreference } from '@store/themeStore';
 
 import { AuthRequestError, toAuthError } from './authErrors';
 import { assertNewPassword, assertSignIn, normalizeEmail } from './authValidation';
@@ -57,6 +58,34 @@ export async function updateLastLogin(): Promise<void> {
   }
 }
 
+export async function updateThemePreference(preference: ThemePreference): Promise<void> {
+  const userId = await requireUserId();
+  const { error } = await supabase.from('profiles').update({ theme_preference: preference }).eq('id', userId);
+
+  if (error) {
+    throw toAuthError(error);
+  }
+}
+
+export async function loadThemePreference(): Promise<ThemePreference | null> {
+  const userId = await currentUserId();
+  if (!userId) {
+    return null;
+  }
+
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('theme_preference')
+    .eq('id', userId)
+    .maybeSingle();
+
+  if (error) {
+    throw toAuthError(error);
+  }
+
+  return isThemePreference(data?.theme_preference) ? data.theme_preference : null;
+}
+
 export async function getSession(): Promise<Session | null> {
   const { data, error } = await supabase.auth.getSession();
   if (error) {
@@ -79,4 +108,28 @@ async function passwordSignIn(email: string, password: string): Promise<void> {
   if (error) {
     throw toAuthError(error);
   }
+}
+
+const THEME_PREFERENCES = ['light', 'dark', 'system'] as const;
+
+function isThemePreference(value: string | null | undefined): value is ThemePreference {
+  return THEME_PREFERENCES.some((preference) => preference === value);
+}
+
+async function currentUserId(): Promise<string | null> {
+  const { data, error } = await supabase.auth.getUser();
+  if (error) {
+    throw toAuthError(error);
+  }
+
+  return data.user?.id ?? null;
+}
+
+async function requireUserId(): Promise<string> {
+  const userId = await currentUserId();
+  if (!userId) {
+    throw new AuthRequestError(authMessages.generic);
+  }
+
+  return userId;
 }

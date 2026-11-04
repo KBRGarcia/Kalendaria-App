@@ -141,7 +141,8 @@ Kalendaria/
 │   │   ├── ui/                   # Botones, inputs, modales base
 │   │   ├── auth/                 # Pantallas de registro, login y verificación
 │   │   ├── calendar/             # MonthGrid, DayCell, ActivityDot
-│   │   └── activity/             # ActivityCard, CategoryPicker, ActivityForm
+│   │   ├── activity/             # ActivityCard, CategoryPicker, ActivityForm
+│   │   └── settings/             # Pantalla de ajustes
 │   ├── constants/
 │   │   ├── categories.ts         # Definición de categorías y colores
 │   │   └── config.ts             # Constantes globales

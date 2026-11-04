@@ -1,5 +1,5 @@
 import type { ReactElement } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Modal, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '@components/ui/Button';
 import { radius, spacing } from '@theme/spacing';
@@ -10,6 +10,7 @@ interface ConfirmDialogProps {
   visible: boolean;
   title: string;
   message: string;
+  confirmLabel?: string;
   busy?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
@@ -19,6 +20,7 @@ export function ConfirmDialog({
   visible,
   title,
   message,
+  confirmLabel = 'Eliminar',
   busy = false,
   onConfirm,
   onCancel,
@@ -33,7 +35,7 @@ export function ConfirmDialog({
           <Text style={[theme.typography.body, { color: theme.colors.textSecondary }]}>{message}</Text>
           <View style={styles.actions}>
             <Button label="Cancelar" variant="text" onPress={onCancel} disabled={busy} />
-            <Button label="Eliminar" variant="destructive" onPress={onConfirm} loading={busy} />
+            <Button label={confirmLabel} variant="destructive" onPress={onConfirm} loading={busy} />
           </View>
         </View>
       </View>

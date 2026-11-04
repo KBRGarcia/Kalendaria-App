@@ -1,5 +1,5 @@
-import { SignedInHome } from '@components/auth/SignedInHome';
+import { SettingsScreen } from '@components/settings/SettingsScreen';
 
 export default function SettingsRoute() {
-  return <SignedInHome />;
+  return <SettingsScreen />;
 }

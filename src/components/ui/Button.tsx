@@ -5,7 +5,7 @@ import { palette } from '@theme/colors';
 import { radius, spacing } from '@theme/spacing';
 import { useTheme, type AppTheme } from '@theme/ThemeProvider';
 
-type ButtonVariant = 'primary' | 'secondary' | 'text' | 'destructive';
+type ButtonVariant = 'primary' | 'secondary' | 'text' | 'destructive' | 'danger';
 
 interface ButtonProps {
   label: string;
@@ -68,8 +68,9 @@ function resolveAppearance(
   pressed: boolean,
   inactive: boolean,
 ): ButtonAppearance {
-  if (variant === 'secondary') {
-    return outlineAppearance(theme, pressed, inactive);
+  if (variant === 'secondary' || variant === 'danger') {
+    const color = variant === 'danger' ? theme.colors.error : theme.colors.primary;
+    return outlineAppearance(pressed, inactive, color);
   }
 
   if (variant === 'text') {
@@ -89,16 +90,16 @@ function resolveAppearance(
   };
 }
 
-function outlineAppearance(theme: AppTheme, pressed: boolean, inactive: boolean): ButtonAppearance {
+function outlineAppearance(pressed: boolean, inactive: boolean, color: string): ButtonAppearance {
   return {
     container: {
       backgroundColor: 'transparent',
       borderWidth: 1.5,
-      borderColor: theme.colors.primary,
+      borderColor: color,
       opacity: inactive ? 0.4 : pressed ? 0.9 : 1,
     },
-    label: { color: theme.colors.primary },
-    spinner: theme.colors.primary,
+    label: { color },
+    spinner: color,
   };
 }
 

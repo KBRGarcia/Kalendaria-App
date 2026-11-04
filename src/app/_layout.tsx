@@ -18,6 +18,7 @@ import { useEffect, useMemo } from 'react';
 
 import { AppErrorBoundary } from '@components/ui/AppErrorBoundary';
 import { useAuthInitialized, useAuthLifecycle } from '@hooks/useAuth';
+import { useThemePreferenceSync } from '@hooks/useThemePreference';
 import { useThemeHydrated } from '@store/themeStore';
 import type { ColorScheme, ThemeColors } from '@theme/colors';
 import { ThemeProvider, useTheme } from '@theme/ThemeProvider';
@@ -92,6 +93,7 @@ function ThemedNavigation() {
 export default function RootLayout() {
   const ready = useAppReady();
   useAuthLifecycle();
+  useThemePreferenceSync();
 
   if (!ready) {
     return null;
