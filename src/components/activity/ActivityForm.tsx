@@ -6,6 +6,8 @@ import { CategoryPicker } from '@components/activity/CategoryPicker';
 import { Button } from '@components/ui/Button';
 import { Input } from '@components/ui/Input';
 import { ACTIVITY_CATEGORIES, type ActivityCategory } from '@constants/categories';
+import { activityMessages } from '@constants/activities';
+import { useNetworkStatus } from '@hooks/useNetworkStatus';
 import { parseActivityDraft, type ActivityDraft } from '@services/activityValidation';
 import { toActivityMessage } from '@services/activitiesService';
 import { spacing } from '@theme/spacing';
@@ -39,6 +41,8 @@ export function ActivityForm({
   onDirtyChange,
 }: ActivityFormProps): ReactElement {
   const theme = useTheme();
+  const isConnected = useNetworkStatus();
+  const offline = isConnected === false;
   const [title, setTitle] = useState(initial.title);
   const [category, setCategory] = useState(initial.category);
   const [note, setNote] = useState(initial.note);
@@ -49,6 +53,10 @@ export function ActivityForm({
   }
 
   function handleSubmit(): void {
+    if (offline) {
+      return;
+    }
+
     try {
       const draft = parseActivityDraft(title, category, note);
       setTitleError(null);
@@ -101,9 +109,9 @@ export function ActivityForm({
         multiline
         maxLength={500}
       />
-      {error ? (
+      {offline || error ? (
         <Text accessibilityRole="alert" style={[theme.typography.caption, { color: theme.colors.error }]}>
-          {error}
+          {offline ? activityMessages.offline : error}
         </Text>
       ) : null}
       <View style={styles.footer}>
@@ -111,9 +119,9 @@ export function ActivityForm({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Eliminar actividad"
-            disabled={saving}
+            disabled={saving || offline}
             onPress={onDelete}
-            style={styles.delete}
+            style={[styles.delete, offline ? styles.inactive : null]}
           >
             <Ionicons name="trash-outline" size={22} color={theme.colors.error} />
           </Pressable>
@@ -121,7 +129,7 @@ export function ActivityForm({
           <View style={styles.delete} />
         )}
         <View style={styles.save}>
-          <Button label="Guardar" onPress={handleSubmit} loading={saving} fullWidth />
+          <Button label="Guardar" onPress={handleSubmit} loading={saving} disabled={offline} fullWidth />
         </View>
       </View>
     </View>
@@ -151,6 +159,9 @@ const styles = StyleSheet.create({
     height: 44,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  inactive: {
+    opacity: 0.4,
   },
   save: {
     flex: 1,

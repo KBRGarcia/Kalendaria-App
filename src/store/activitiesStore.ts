@@ -1,6 +1,8 @@
 import { create } from 'zustand';
 
-import { monthPrefix } from '@lib/dates';
+import { activityMessages } from '@constants/activities';
+import { loadMonthFromCache, saveMonthToCache } from '@lib/cache';
+import { monthPrefix, parseDateKey } from '@lib/dates';
 import * as activitiesService from '@services/activitiesService';
 import type { Activity, ActivityCreateInput, ActivityUpdateInput } from '@/types/activity';
 
@@ -12,6 +14,7 @@ interface ActivitiesState {
   createActivity: (input: ActivityCreateInput) => Promise<void>;
   updateActivity: (id: string, input: ActivityUpdateInput) => Promise<void>;
   deleteActivity: (id: string) => Promise<void>;
+  clearLocalActivities: () => void;
   getActivitiesForDate: (date: string) => Activity[];
 }
 
@@ -34,44 +37,67 @@ export const useActivitiesStore = create<ActivitiesState>((set, get) => ({
         return;
       }
 
-      set((state) => ({
-        activitiesByDate: replaceMonth(state.activitiesByDate, year, month, activities),
-        isLoading: false,
-      }));
+      const activitiesByDate = replaceMonth(get().activitiesByDate, year, month, activities);
+      set({ activitiesByDate, isLoading: false, error: null });
+      await rememberMonth(activitiesByDate, year, month);
     } catch (error) {
       if (token !== fetchToken) {
         return;
       }
 
-      set({ isLoading: false, error: activitiesService.toActivityMessage(error) });
+      if (!activitiesService.isOfflineActivityError(error)) {
+        set({ isLoading: false, error: activitiesService.toActivityMessage(error) });
+        return;
+      }
+
+      const cached = await loadMonthFromCache(year, month).catch(() => null);
+      if (token !== fetchToken) {
+        return;
+      }
+
+      if (!cached) {
+        set({ isLoading: false, error: activityMessages.offline });
+        return;
+      }
+
+      set({
+        activitiesByDate: replaceMonth(get().activitiesByDate, year, month, cached),
+        isLoading: false,
+        error: activityMessages.offline,
+      });
     }
   },
 
   createActivity: async (input) => {
     const activity = await activitiesService.create(input);
     fetchToken += 1;
-    set((state) => ({
-      activitiesByDate: putActivity(state.activitiesByDate, activity),
-      isLoading: false,
-    }));
+    const activitiesByDate = putActivity(get().activitiesByDate, activity);
+    set({ activitiesByDate, isLoading: false });
+    await rememberMonth(activitiesByDate, yearOf(activity.date), monthOf(activity.date));
   },
 
   updateActivity: async (id, input) => {
     const activity = await activitiesService.update(id, input);
     fetchToken += 1;
-    set((state) => ({
-      activitiesByDate: putActivity(state.activitiesByDate, activity),
-      isLoading: false,
-    }));
+    const activitiesByDate = putActivity(get().activitiesByDate, activity);
+    set({ activitiesByDate, isLoading: false });
+    await rememberMonth(activitiesByDate, yearOf(activity.date), monthOf(activity.date));
   },
 
   deleteActivity: async (id) => {
+    const existing = findActivity(get().activitiesByDate, id);
     await activitiesService.remove(id);
     fetchToken += 1;
-    set((state) => ({
-      activitiesByDate: dropActivity(state.activitiesByDate, id),
-      isLoading: false,
-    }));
+    const activitiesByDate = dropActivity(get().activitiesByDate, id);
+    set({ activitiesByDate, isLoading: false });
+    if (existing) {
+      await rememberMonth(activitiesByDate, yearOf(existing.date), monthOf(existing.date));
+    }
+  },
+
+  clearLocalActivities: () => {
+    fetchToken += 1;
+    set({ activitiesByDate: {}, isLoading: false, error: null });
   },
 
   getActivitiesForDate: (date) => get().activitiesByDate[date] ?? NO_ACTIVITIES,
@@ -86,6 +112,59 @@ export function findActivity(activitiesByDate: Record<string, Activity[]>, activ
   }
 
   return null;
+}
+
+async function rememberMonth(
+  activitiesByDate: Record<string, Activity[]>,
+  year: number,
+  month: number,
+): Promise<void> {
+  if (!Number.isInteger(year) || !Number.isInteger(month)) {
+    return;
+  }
+
+  try {
+    await saveMonthToCache(year, month, listMonth(activitiesByDate, year, month));
+  } catch (error: unknown) {
+    if (__DEV__) {
+      console.error(error);
+    }
+  }
+}
+
+function listMonth(activitiesByDate: Record<string, Activity[]>, year: number, month: number): Activity[] {
+  const prefix = monthPrefix(year, month);
+  const activities: Activity[] = [];
+
+  for (const [date, items] of Object.entries(activitiesByDate)) {
+    if (date.startsWith(prefix)) {
+      activities.push(...items);
+    }
+  }
+
+  activities.sort(compareActivities);
+  return activities;
+}
+
+function compareActivities(left: Activity, right: Activity): number {
+  if (left.date !== right.date) {
+    return left.date < right.date ? -1 : 1;
+  }
+
+  if (left.created_at === right.created_at) {
+    return 0;
+  }
+
+  return left.created_at < right.created_at ? -1 : 1;
+}
+
+function yearOf(date: string): number {
+  return parseDateKey(date)?.getFullYear() ?? Number.NaN;
+}
+
+function monthOf(date: string): number {
+  const parsed = parseDateKey(date);
+  return parsed ? parsed.getMonth() + 1 : Number.NaN;
 }
 
 function replaceMonth(

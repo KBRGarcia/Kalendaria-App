@@ -91,6 +91,10 @@ export function toActivityMessage(error: unknown): string {
   return activityMessages.loadFailed;
 }
 
+export function isOfflineActivityError(error: unknown): boolean {
+  return error instanceof ActivityRequestError && error.userMessage === activityMessages.offline;
+}
+
 function toActivityError(error: unknown, fallback: string = activityMessages.loadFailed): ActivityRequestError {
   if (__DEV__) {
     console.error(error);

@@ -1,7 +1,9 @@
 import type { Session, User } from '@supabase/supabase-js';
 import { create } from 'zustand';
 
+import { clearAllCache } from '@lib/cache';
 import * as authService from '@services/authService';
+import { useActivitiesStore } from '@store/activitiesStore';
 
 interface AuthState {
   user: User | null;
@@ -63,6 +65,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     try {
       await authService.signIn(email, password);
+      await forgetActivities();
       const session = await authService.getSession();
       set({ session, user: session?.user ?? null, isLoading: false });
     } catch (error) {
@@ -77,6 +80,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     try {
       await authService.signUp(email, password);
+      await forgetActivities();
       const session = await authService.getSession();
       set({ session, user: session?.user ?? null, isLoading: false });
     } catch (error) {
@@ -91,6 +95,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
     try {
       await authService.signOut();
+      await forgetActivities();
       set({ user: null, session: null, isLoading: false });
     } catch (error) {
       set({ isLoading: false });
@@ -98,6 +103,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 }));
+
+async function forgetActivities(): Promise<void> {
+  useActivitiesStore.getState().clearLocalActivities();
+
+  try {
+    await clearAllCache();
+  } catch (error: unknown) {
+    if (__DEV__) {
+      console.error(error);
+    }
+  }
+}
 
 async function clearLeakedSession(): Promise<void> {
   const session = await authService.getSession().catch(() => null);
