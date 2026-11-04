@@ -1,4 +1,5 @@
 import { useRouter } from 'expo-router';
+import * as Haptics from 'expo-haptics';
 import { useCallback, useMemo, useState, type ReactElement } from 'react';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -24,10 +25,12 @@ export function CalendarScreen(): ReactElement {
   const activitiesByDate = useActivitiesStore((state) => state.activitiesByDate);
 
   const showPreviousMonth = useCallback(() => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
     setMonth((current) => shiftMonth(current, -1));
   }, []);
 
   const showNextMonth = useCallback(() => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
     setMonth((current) => shiftMonth(current, 1));
   }, []);
 

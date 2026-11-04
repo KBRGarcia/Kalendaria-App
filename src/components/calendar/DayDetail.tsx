@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useCallback, type ReactElement } from 'react';
-import { FlatList, StyleSheet, Text, View } from 'react-native';
+import { FlatList, StyleSheet, Text, View, type ListRenderItem } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ActivityCard } from '@components/activity/ActivityCard';
@@ -39,6 +39,11 @@ export function DayDetail({ date, dateKey }: DayDetailProps): ReactElement {
     router.push({ pathname: '/activity/new', params: { date: dateKey } });
   }, [dateKey, router]);
 
+  const renderActivity = useCallback<ListRenderItem<Activity>>(
+    ({ item }) => <ActivityCard activity={item} onPress={openActivity} />,
+    [openActivity],
+  );
+
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: theme.colors.background }]} edges={['top', 'left', 'right']}>
       <View style={styles.header}>
@@ -59,7 +64,7 @@ export function DayDetail({ date, dateKey }: DayDetailProps): ReactElement {
       <FlatList
         data={activities}
         keyExtractor={activityKey}
-        renderItem={({ item }) => <ActivityCard activity={item} onPress={openActivity} />}
+        renderItem={renderActivity}
         style={styles.listFill}
         contentContainerStyle={[styles.list, { paddingBottom: insets.bottom + spacing['3xl'] + spacing.lg }]}
         ListEmptyComponent={

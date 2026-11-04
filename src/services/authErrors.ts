@@ -10,7 +10,21 @@ const messagesByCode: Record<string, string> = {
   weak_password: authMessages.weakPassword,
   over_request_rate_limit: authMessages.rateLimit,
   over_email_send_rate_limit: authMessages.rateLimit,
+  session_expired: authMessages.sessionExpired,
+  session_not_found: authMessages.sessionExpired,
+  refresh_token_not_found: authMessages.sessionExpired,
+  refresh_token_already_used: authMessages.sessionExpired,
+  bad_jwt: authMessages.sessionExpired,
 };
+
+const SESSION_CODES = new Set([
+  'session_expired',
+  'session_not_found',
+  'refresh_token_not_found',
+  'refresh_token_already_used',
+  'bad_jwt',
+  'PGRST301',
+]);
 
 export class AuthRequestError extends Error {
   readonly userMessage: string;
@@ -47,12 +61,33 @@ export function toAuthError(error: unknown): AuthRequestError {
     return new AuthRequestError(authMessages.offline);
   }
 
+  if (isSessionExpiredError(error)) {
+    return new AuthRequestError(authMessages.sessionExpired);
+  }
+
   if (isAlreadyRegistered(error)) {
     return new AuthRequestError(authMessages.duplicateEmail);
   }
 
   const code = isAuthError(error) ? error.code : readCode(error);
   return new AuthRequestError(messageForCode(code));
+}
+
+export function isSessionExpiredError(error: unknown): boolean {
+  if (isAuthError(error) && error.status === 401) {
+    return true;
+  }
+
+  const code = isAuthError(error) ? error.code : readCode(error);
+  if (code && SESSION_CODES.has(code)) {
+    return true;
+  }
+
+  if (!isRecord(error) || typeof error.message !== 'string') {
+    return false;
+  }
+
+  return /jwt expired|invalid jwt/i.test(error.message);
 }
 
 function messageForCode(code: string | undefined): string {

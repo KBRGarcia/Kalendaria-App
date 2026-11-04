@@ -6,6 +6,7 @@ import { AuthScaffold, FormBlock, FormError } from '@components/ui/AuthScaffold'
 import { Button } from '@components/ui/Button';
 import { Input } from '@components/ui/Input';
 import { useAuth } from '@hooks/useAuth';
+import { consumeSessionNotice } from '@lib/sessionNotice';
 import { toUserMessage } from '@services/authErrors';
 import { spacing } from '@theme/spacing';
 import { useTheme } from '@theme/ThemeProvider';
@@ -18,7 +19,7 @@ export function LoginScreen(): ReactElement {
   const { signIn, isLoading } = useAuth();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(() => consumeSessionNotice());
 
   async function handleSubmit(): Promise<void> {
     setErrorMessage(null);

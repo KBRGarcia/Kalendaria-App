@@ -1,5 +1,5 @@
-import { memo, useMemo, type ReactElement } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { memo, useEffect, useMemo, useRef, type ReactElement } from 'react';
+import { Animated, StyleSheet, View } from 'react-native';
 
 import { DayCell } from '@components/calendar/DayCell';
 import { buildMonthCells, isInCalendarMonth, isSameCalendarDay, toDateKey } from '@lib/dates';
@@ -26,9 +26,17 @@ export const MonthGrid = memo(function MonthGrid({
 }: MonthGridProps): ReactElement {
   const cells = useMemo(() => buildMonthCells(month), [month]);
   const rows = chunkWeeks(cells);
+  const opacity = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    opacity.setValue(0.45);
+    const fade = Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true });
+    fade.start();
+    return () => fade.stop();
+  }, [month, opacity]);
 
   return (
-    <View style={styles.grid}>
+    <Animated.View style={[styles.grid, { opacity }]}>
       {rows.map((week) => (
         <View key={toDateKey(week[0] ?? month)} style={styles.row}>
           {week.map((date) => {
@@ -49,7 +57,7 @@ export const MonthGrid = memo(function MonthGrid({
           })}
         </View>
       ))}
-    </View>
+    </Animated.View>
   );
 });
 

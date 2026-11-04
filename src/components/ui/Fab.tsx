@@ -1,5 +1,5 @@
-import type { ReactElement } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { useEffect, useRef, type ReactElement } from 'react';
+import { Animated, Pressable, StyleSheet } from 'react-native';
 import { Ionicons } from '@react-native-vector-icons/ionicons';
 
 import { palette } from '@theme/colors';
@@ -12,6 +12,18 @@ interface FabProps {
 
 export function Fab({ accessibilityLabel, onPress }: FabProps): ReactElement {
   const theme = useTheme();
+  const scale = useRef(new Animated.Value(0.86)).current;
+
+  useEffect(() => {
+    const entrance = Animated.spring(scale, {
+      toValue: 1,
+      friction: 6,
+      tension: 80,
+      useNativeDriver: true,
+    });
+    entrance.start();
+    return () => entrance.stop();
+  }, [scale]);
 
   return (
     <Pressable
@@ -21,7 +33,11 @@ export function Fab({ accessibilityLabel, onPress }: FabProps): ReactElement {
       style={({ pressed }) => [
         styles.button,
         theme.shadows.md,
-        { backgroundColor: theme.colors.primary, opacity: pressed ? 0.85 : 1 },
+        {
+          backgroundColor: theme.colors.primary,
+          opacity: pressed ? 0.85 : 1,
+          transform: [{ scale }],
+        },
       ]}
     >
       <Ionicons name="add" size={28} color={palette.blanco} />

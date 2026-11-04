@@ -1,9 +1,12 @@
 import { create } from 'zustand';
 
 import { activityMessages } from '@constants/activities';
+import { authMessages } from '@constants/auth';
 import { loadMonthFromCache, saveMonthToCache } from '@lib/cache';
 import { monthPrefix, parseDateKey } from '@lib/dates';
+import { setSessionNotice } from '@lib/sessionNotice';
 import * as activitiesService from '@services/activitiesService';
+import { signOut } from '@services/authService';
 import type { Activity, ActivityCreateInput, ActivityUpdateInput } from '@/types/activity';
 
 interface ActivitiesState {
@@ -45,6 +48,10 @@ export const useActivitiesStore = create<ActivitiesState>((set, get) => ({
         return;
       }
 
+      if (await leaveIfSessionExpired(error)) {
+        return;
+      }
+
       if (!activitiesService.isOfflineActivityError(error)) {
         set({ isLoading: false, error: activitiesService.toActivityMessage(error) });
         return;
@@ -69,29 +76,54 @@ export const useActivitiesStore = create<ActivitiesState>((set, get) => ({
   },
 
   createActivity: async (input) => {
-    const activity = await activitiesService.create(input);
-    fetchToken += 1;
-    const activitiesByDate = putActivity(get().activitiesByDate, activity);
-    set({ activitiesByDate, isLoading: false });
-    await rememberMonth(activitiesByDate, yearOf(activity.date), monthOf(activity.date));
+    try {
+      const activity = await activitiesService.create(input);
+      fetchToken += 1;
+      const activitiesByDate = putActivity(get().activitiesByDate, activity);
+      set({ activitiesByDate, isLoading: false });
+      await rememberMonth(activitiesByDate, yearOf(activity.date), monthOf(activity.date));
+    } catch (error) {
+      if (await leaveIfSessionExpired(error)) {
+        return;
+      }
+
+      throw error;
+    }
   },
 
   updateActivity: async (id, input) => {
-    const activity = await activitiesService.update(id, input);
-    fetchToken += 1;
-    const activitiesByDate = putActivity(get().activitiesByDate, activity);
-    set({ activitiesByDate, isLoading: false });
-    await rememberMonth(activitiesByDate, yearOf(activity.date), monthOf(activity.date));
+    try {
+      const activity = await activitiesService.update(id, input);
+      fetchToken += 1;
+      const activitiesByDate = putActivity(get().activitiesByDate, activity);
+      set({ activitiesByDate, isLoading: false });
+      await rememberMonth(activitiesByDate, yearOf(activity.date), monthOf(activity.date));
+    } catch (error) {
+      if (await leaveIfSessionExpired(error)) {
+        return;
+      }
+
+      throw error;
+    }
   },
 
   deleteActivity: async (id) => {
     const existing = findActivity(get().activitiesByDate, id);
-    await activitiesService.remove(id);
-    fetchToken += 1;
-    const activitiesByDate = dropActivity(get().activitiesByDate, id);
-    set({ activitiesByDate, isLoading: false });
-    if (existing) {
-      await rememberMonth(activitiesByDate, yearOf(existing.date), monthOf(existing.date));
+
+    try {
+      await activitiesService.remove(id);
+      fetchToken += 1;
+      const activitiesByDate = dropActivity(get().activitiesByDate, id);
+      set({ activitiesByDate, isLoading: false });
+      if (existing) {
+        await rememberMonth(activitiesByDate, yearOf(existing.date), monthOf(existing.date));
+      }
+    } catch (error) {
+      if (await leaveIfSessionExpired(error)) {
+        return;
+      }
+
+      throw error;
     }
   },
 
@@ -165,6 +197,22 @@ function yearOf(date: string): number {
 function monthOf(date: string): number {
   const parsed = parseDateKey(date);
   return parsed ? parsed.getMonth() + 1 : Number.NaN;
+}
+
+async function leaveIfSessionExpired(error: unknown): Promise<boolean> {
+  if (!activitiesService.isSessionActivityError(error)) {
+    return false;
+  }
+
+  fetchToken += 1;
+  setSessionNotice(authMessages.sessionExpired);
+  useActivitiesStore.setState({ isLoading: false, error: null });
+  await signOut().catch((signOutError: unknown) => {
+    if (__DEV__) {
+      console.error(signOutError);
+    }
+  });
+  return true;
 }
 
 function replaceMonth(

@@ -8,6 +8,7 @@ export const authMessages = {
   rateLimit: 'Has pedido demasiados intentos. Espera un momento e inténtalo de nuevo.',
   offline: 'Sin conexión. Revisa tu internet.',
   generic: 'No se pudo completar la acción. Inténtalo de nuevo.',
+  sessionExpired: 'Tu sesión expiró. Vuelve a entrar.',
   missingFields: 'Introduce tu correo y tu contraseña.',
   invalidEmail: 'Introduce un correo válido.',
   weakPassword: 'La contraseña debe tener al menos 8 caracteres, una letra y un número.',

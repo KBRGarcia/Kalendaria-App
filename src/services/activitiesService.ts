@@ -1,6 +1,8 @@
 import { activityMessages } from '@constants/activities';
+import { authMessages } from '@constants/auth';
 import { monthRange } from '@lib/dates';
 import { supabase } from '@lib/supabase';
+import { isSessionExpiredError } from '@services/authErrors';
 import type { Activity, ActivityCreateInput, ActivityUpdateInput } from '@/types/activity';
 
 const ACTIVITY_COLUMNS = 'id, user_id, date, title, category, note, created_at, updated_at';
@@ -95,6 +97,10 @@ export function isOfflineActivityError(error: unknown): boolean {
   return error instanceof ActivityRequestError && error.userMessage === activityMessages.offline;
 }
 
+export function isSessionActivityError(error: unknown): boolean {
+  return error instanceof ActivityRequestError && error.userMessage === authMessages.sessionExpired;
+}
+
 function toActivityError(error: unknown, fallback: string = activityMessages.loadFailed): ActivityRequestError {
   if (__DEV__) {
     console.error(error);
@@ -102,6 +108,10 @@ function toActivityError(error: unknown, fallback: string = activityMessages.loa
 
   if (isOffline(error)) {
     return new ActivityRequestError(activityMessages.offline);
+  }
+
+  if (isSessionExpiredError(error)) {
+    return new ActivityRequestError(authMessages.sessionExpired);
   }
 
   return new ActivityRequestError(fallback);

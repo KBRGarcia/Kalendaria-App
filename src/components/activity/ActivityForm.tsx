@@ -119,6 +119,7 @@ export function ActivityForm({
           <Pressable
             accessibilityRole="button"
             accessibilityLabel="Eliminar actividad"
+            accessibilityState={{ disabled: saving || offline }}
             disabled={saving || offline}
             onPress={onDelete}
             style={[styles.delete, offline ? styles.inactive : null]}
