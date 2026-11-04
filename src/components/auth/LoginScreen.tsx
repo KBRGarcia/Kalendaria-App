@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useState, type ReactElement } from 'react';
-import { Image, StyleSheet, Text } from 'react-native';
+import { Image, StyleSheet, Text, useWindowDimensions } from 'react-native';
 
 import { AuthScaffold, FormBlock, FormError } from '@components/ui/AuthScaffold';
 import { Button } from '@components/ui/Button';
@@ -11,10 +11,14 @@ import { toUserMessage } from '@services/authErrors';
 import { spacing } from '@theme/spacing';
 import { useTheme } from '@theme/ThemeProvider';
 
-const logo = require('../../../assets/icon.png') as number;
+const logo = require('../../../assets/logo-name-kalendaria.png') as number;
+const LOGO_ASPECT = 690 / 612;
+const LOGO_MAX_WIDTH = 220;
 
 export function LoginScreen(): ReactElement {
   const theme = useTheme();
+  const { width: screenWidth } = useWindowDimensions();
+  const logoWidth = Math.min(LOGO_MAX_WIDTH, Math.round(screenWidth * 0.58));
   const router = useRouter();
   const { signIn, isLoading } = useAuth();
   const [email, setEmail] = useState('');
@@ -33,7 +37,12 @@ export function LoginScreen(): ReactElement {
 
   return (
     <AuthScaffold>
-      <Image accessibilityLabel="Kalendaria" source={logo} style={styles.logo} />
+      <Image
+        accessibilityLabel="Kalendaria"
+        resizeMode="contain"
+        source={logo}
+        style={[styles.logo, { width: logoWidth, height: Math.round(logoWidth / LOGO_ASPECT) }]}
+      />
       <Text accessibilityRole="header" style={[theme.typography.h1, styles.center, { color: theme.colors.text }]}>
         Bienvenido a Kalendaria
       </Text>
@@ -76,10 +85,8 @@ export function LoginScreen(): ReactElement {
 
 const styles = StyleSheet.create({
   logo: {
-    width: 80,
-    height: 80,
     alignSelf: 'center',
-    marginTop: 80,
+    marginTop: spacing['2xl'],
   },
   form: {
     marginTop: spacing.sm,

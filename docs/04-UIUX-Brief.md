@@ -354,13 +354,13 @@ Dot (punto de categoría):
 
 ###7.1. Splash Screen
 - Fondo: #F2ECEA (light) / #0E1C22 (dark).
-- Logo: centrado, 200px de ancho.
+- Logo: `assets/logo-name-kalendaria.png`, centrado, 200px de ancho.
 - Estado: se oculta al terminar la hidratación de sesión (máx 1.5s).
 - Config: plugin expo-splash-screen en app.json.
 
 ### 7.2. Login
 Layout vertical, centrado:
-1. Logo (80px) arriba, centrado, margen superior 80px.
+1. `assets/logo-name-kalendaria.png` arriba, centrado. Ancho máximo 220 px (58 % del ancho de pantalla). Margen superior 32 px. Ancho y alto van explícitos para que Android no lo estire al tamaño del archivo.
 2. Título "Bienvenido a Kalendaria" (h1, text).
 3. Subtítulo "Tu agenda personal, simple y clara" (body, textSecondary).
 4. Espacio xl (24px).
@@ -528,21 +528,23 @@ Regla: las animaciones son sutiles y nunca bloquean la interacción.
 ## 12. Assets
 
 ### 12.1. Logo
-- Formato: SVG o PNG transparente.
-- Tamaño mínimo: 240x240px (para splash).
-- Variantes:
--- Logo principal (color o sobre fondo claro).
--- Logo blanco (sobre fondo oscuro).
--- Isotipo (solo símbolo, sin texto).
+Archivos definitivos en `assets/`, PNG con transparencia:
+
+- `logo-kalendaria.png`: isotipo (símbolo, sin texto).
+- `name-kalendaria.png`: wordmark.
+- `logo-name-kalendaria.png`: isotipo y wordmark.
+
+El isotipo entregado es a color (coral a turquesa). No se recolorea a blanco.
 
 ### 12.2. Splash screen
-- Imagen centrada: logo + "Kalendaria" debajo.
+- Imagen centrada: `logo-name-kalendaria.png`.
 - Fondo: #F2ECEA (light) / #0E1C22 (dark).
+- El plugin `expo-splash-screen` muestra esa imagen a 200 pt de ancho.
 
 ### 12.3. App icon
-- Cuadrado 1024x1024px.
-- Fondo: #00A4CC (turquesa de marca).
-- Símbolo: isotipo blanco centrado.
+- Cuadrado 1024×1024 px, opaco, en `assets/icon.png`.
+- Fondo: #F2ECEA. El isotipo a color se centra encima. Un fondo turquesa taparía el degradado del símbolo.
+- Android adaptive icon: el mismo isotipo en la zona segura, fondo #F2ECEA. La versión monocroma es el alfa del isotipo en blanco.
 
 ---
 
