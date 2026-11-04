@@ -34,7 +34,8 @@ export function parseDateKey(value: string): Date | null {
 }
 
 export function shiftMonth(date: Date, amount: number): Date {
-  return addMonths(date, amount);
+  // El día 31 no existe en todos los meses. Anclar al día 1 evita saltarse febrero.
+  return addMonths(startOfMonth(date), amount);
 }
 
 export function isSameCalendarDay(left: Date, right: Date): boolean {

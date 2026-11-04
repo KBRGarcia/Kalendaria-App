@@ -26,22 +26,23 @@ export function Fab({ accessibilityLabel, onPress }: FabProps): ReactElement {
   }, [scale]);
 
   return (
-    <Pressable
-      accessibilityRole="button"
-      accessibilityLabel={accessibilityLabel}
-      onPress={onPress}
-      style={({ pressed }) => [
-        styles.button,
-        theme.shadows.md,
-        {
-          backgroundColor: theme.colors.primary,
-          opacity: pressed ? 0.85 : 1,
-          transform: [{ scale }],
-        },
-      ]}
-    >
-      <Ionicons name="add" size={28} color={palette.blanco} />
-    </Pressable>
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel={accessibilityLabel}
+        onPress={onPress}
+        style={({ pressed }) => [
+          styles.button,
+          theme.shadows.md,
+          {
+            backgroundColor: theme.colors.primary,
+            opacity: pressed ? 0.85 : 1,
+          },
+        ]}
+      >
+        <Ionicons name="add" size={28} color={palette.blanco} />
+      </Pressable>
+    </Animated.View>
   );
 }
 
