@@ -3,9 +3,10 @@ import type { ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { DayDetail } from '@components/calendar/DayDetail';
 import { IconButton } from '@components/ui/IconButton';
 import { activityMessages } from '@constants/activities';
-import { formatDayHeading, parseDateKey } from '@lib/dates';
+import { parseDateKey } from '@lib/dates';
 import { layout, spacing } from '@theme/spacing';
 import { useTheme } from '@theme/ThemeProvider';
 
@@ -14,16 +15,25 @@ interface DayScreenProps {
 }
 
 export function DayScreen({ dateKey }: DayScreenProps): ReactElement {
+  const date = parseDateKey(dateKey);
+
+  if (!date) {
+    return <InvalidDay />;
+  }
+
+  return <DayDetail date={date} dateKey={dateKey} />;
+}
+
+function InvalidDay(): ReactElement {
   const theme = useTheme();
   const router = useRouter();
-  const date = parseDateKey(dateKey);
 
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: theme.colors.background }]}>
       <View style={styles.header}>
         <IconButton icon="chevron-back" accessibilityLabel="Volver al calendario" onPress={() => router.back()} />
-        <Text accessibilityRole="header" style={[theme.typography.h2, styles.title, { color: theme.colors.text }]}>
-          {date ? formatDayHeading(date) : activityMessages.invalidDate}
+        <Text accessibilityRole="header" style={[theme.typography.h2, { color: theme.colors.text }]}>
+          {activityMessages.invalidDate}
         </Text>
       </View>
     </SafeAreaView>
@@ -40,8 +50,5 @@ const styles = StyleSheet.create({
     gap: spacing.sm,
     paddingHorizontal: layout.screenPaddingHorizontal,
     paddingTop: spacing.lg,
-  },
-  title: {
-    flex: 1,
   },
 });

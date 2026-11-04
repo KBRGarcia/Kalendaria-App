@@ -80,7 +80,7 @@ export function formatMonthTitle(date: Date): string {
 }
 
 export function formatDayHeading(date: Date): string {
-  return capitalize(format(date, "EEEE, d 'de' MMMM", { locale: es }));
+  return capitalize(format(date, "EEEE, d 'de' MMMM 'de' yyyy", { locale: es }));
 }
 
 export function formatDaySpoken(date: Date): string {

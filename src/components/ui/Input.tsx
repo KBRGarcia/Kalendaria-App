@@ -21,6 +21,9 @@ interface InputProps {
   autoComplete?: TextInputProps['autoComplete'];
   textContentType?: TextInputProps['textContentType'];
   autoCapitalize?: TextInputProps['autoCapitalize'];
+  autoCorrect?: boolean;
+  multiline?: boolean;
+  maxLength?: number;
 }
 
 export function Input({
@@ -36,19 +39,31 @@ export function Input({
   autoComplete,
   textContentType,
   autoCapitalize = 'none',
+  autoCorrect = false,
+  multiline = false,
+  maxLength,
 }: InputProps): ReactElement {
   const theme = useTheme();
   const [focused, setFocused] = useState(false);
   const [passwordVisible, setPasswordVisible] = useState(false);
   const message = error ?? helperText;
   const fieldBackground = theme.colorScheme === 'dark' ? theme.colors.surfaceSecondary : theme.colors.surface;
+  const showCount = maxLength !== undefined && value.length >= Math.ceil(maxLength * 0.8);
 
   return (
     <View style={styles.wrap}>
-      <Text style={[theme.typography.caption, { color: theme.colors.textSecondary }]}>{label}</Text>
+      <View style={styles.labelRow}>
+        <Text style={[theme.typography.caption, { color: theme.colors.textSecondary }]}>{label}</Text>
+        {showCount && maxLength !== undefined ? (
+          <Text style={[theme.typography.caption, { color: theme.colors.textSecondary }]}>
+            {`${value.length}/${maxLength}`}
+          </Text>
+        ) : null}
+      </View>
       <View
         style={[
           styles.field,
+          multiline ? styles.multilineField : null,
           {
             backgroundColor: fieldBackground,
             borderColor: error ? theme.colors.error : focused ? theme.colors.primary : theme.colors.border,
@@ -67,10 +82,13 @@ export function Input({
           autoComplete={autoComplete}
           textContentType={textContentType}
           autoCapitalize={autoCapitalize}
-          autoCorrect={false}
+          autoCorrect={autoCorrect}
+          multiline={multiline}
+          maxLength={maxLength}
+          textAlignVertical={multiline ? 'top' : 'center'}
           onFocus={() => setFocused(true)}
           onBlur={() => setFocused(false)}
-          style={[styles.input, theme.typography.body, { color: theme.colors.text }]}
+          style={[styles.input, multiline ? styles.multilineInput : null, theme.typography.body, { color: theme.colors.text }]}
           accessibilityLabel={label}
         />
         {isPassword ? (
@@ -101,6 +119,12 @@ const styles = StyleSheet.create({
   wrap: {
     gap: spacing.xs,
   },
+  labelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
   field: {
     minHeight: 52,
     borderRadius: radius.input,
@@ -112,6 +136,15 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     minHeight: 44,
+    paddingVertical: 0,
+  },
+  multilineField: {
+    minHeight: 80,
+    alignItems: 'flex-start',
+    paddingVertical: spacing.md,
+  },
+  multilineInput: {
+    minHeight: 80,
     paddingVertical: 0,
   },
   toggle: {
