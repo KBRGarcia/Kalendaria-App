@@ -4,7 +4,13 @@
 # Uso:   npm run db:backup
 # Requiere: pg_dump (paquete postgresql-client) y la variable SUPABASE_DB_URL, que se lee
 # del entorno o del archivo .env.backup.local (ignorado por git). Obtén la cadena en
-# Supabase > Connect > "Session pooler" (compatible con IPv4) y sustituye [YOUR-PASSWORD].
+# Supabase > Connect > "Session pooler" (compatible con IPv4).
+#
+# CONTRASEÑA: si contiene espacios, paréntesis u otros símbolos, NO la pongas dentro de la URL
+# (habría que codificarla). Déjala fuera y pásala en PGPASSWORD, entre comillas simples:
+#   SUPABASE_DB_URL=postgresql://postgres.<ref>@aws-0-<region>.pooler.supabase.com:5432/postgres
+#   PGPASSWORD='tu contraseña (con espacios) 123'
+# pg_dump lee PGPASSWORD tal cual, sin codificar nada.
 #
 # Genera en backups/ (ignorada por git):
 #   kalendaria-public-FECHA.sql  esquema y datos de la app (profiles, activities, funciones, RLS)

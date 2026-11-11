@@ -141,7 +141,7 @@ Verifica las cifras vigentes en [supabase.com/pricing](https://supabase.com/pric
 El repositorio incluye `.github/workflows/keepalive.yml`: cada 3 días hace una consulta de **solo lectura** a la API (`GET /rest/v1/activities?select=id&limit=1`) y falla de forma visible si la API no responde 200. Solo necesita **dos secretos** que debes crear tú en GitHub:
 
 1. Repositorio → **Settings → Secrets and variables → Actions → New repository secret**.
-2. `SUPABASE_URL` = la URL del proyecto (`https://<ref>.supabase.co`).
+2. `SUPABASE_URL` = la **Project URL** del proyecto, exactamente `https://<ref>.supabase.co` (sin barra final ni rutas). **No** la dirección del panel (`supabase.com/dashboard/project/…`): con ella la API responde `308` y el workflow falla. La encuentras en **Connect** (barra superior del proyecto) o en `EXPO_PUBLIC_SUPABASE_URL` de tu `.env.local`.
 3. `SUPABASE_ANON_KEY` = la clave **publicable** (`sb_publishable_…`). Nunca la `service_role` ni `sb_secret_…`.
 4. Pestaña **Actions → Supabase keep-alive → Run workflow** para probarlo; debe terminar en verde ("Respuesta de la API: 200").
 

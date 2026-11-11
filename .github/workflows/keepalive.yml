@@ -23,15 +23,37 @@ jobs:
           SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
         run: |
-          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_ANON_KEY" ]; then
+          # Limpia espacios, saltos de línea y barras finales que se cuelan al pegar un secreto.
+          url="$(printf '%s' "$SUPABASE_URL" | tr -d '[:space:]')"
+          url="${url%/}"
+          key="$(printf '%s' "$SUPABASE_ANON_KEY" | tr -d '[:space:]')"
+
+          if [ -z "$url" ] || [ -z "$key" ]; then
             echo "::error::Faltan los secretos SUPABASE_URL y/o SUPABASE_ANON_KEY."
             exit 1
           fi
-          status=$(curl -sS --retry 3 --retry-delay 5 -o /dev/null -w '%{http_code}' \
-            "$SUPABASE_URL/rest/v1/activities?select=id&limit=1" \
-            -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $SUPABASE_ANON_KEY")
-          echo "Respuesta de la API: $status"
-          if [ "$status" != "200" ]; then
-            echo "::error::La API respondió $status (se esperaba 200). ¿Proyecto pausado o claves incorrectas?"
+
+          # La URL debe ser exactamente https://<ref>.supabase.co (la del panel o con rutas da 308/404).
+          if ! printf '%s' "$url" | grep -Eq '^https://[a-z0-9]+\.supabase\.co$'; then
+            host="$(printf '%s' "$url" | cut -d/ -f1-3)"
+            echo "::error::SUPABASE_URL tiene un formato incorrecto (empieza por: $host). Debe ser la 'Project URL' del proyecto, del tipo https://xxxxxxxx.supabase.co, sin barra final ni rutas. No uses la dirección del panel (supabase.com/dashboard/...)."
             exit 1
           fi
+
+          # Nunca debe usarse una clave secreta en un workflow de keep-alive.
+          case "$key" in
+            sb_secret_*) echo "::error::SUPABASE_ANON_KEY contiene una clave SECRETA (sb_secret_). Usa la clave publicable (sb_publishable_...) y borra esta."; exit 1 ;;
+          esac
+
+          status=$(curl -sS --retry 3 --retry-delay 5 -o /dev/null -w '%{http_code}' \
+            "$url/rest/v1/activities?select=id&limit=1" \
+            -H "apikey: $key" -H "Authorization: Bearer $key")
+          echo "Respuesta de la API: $status"
+
+          case "$status" in
+            200) echo "OK: el proyecto está activo." ;;
+            401|403) echo "::error::La API respondió $status: la clave publicable es incorrecta o fue rotada."; exit 1 ;;
+            404) echo "::error::La API respondió 404: revisa que SUPABASE_URL sea la Project URL."; exit 1 ;;
+            000|5*) echo "::error::La API respondió $status: el proyecto puede estar pausado o con incidencias. Revisa el panel de Supabase."; exit 1 ;;
+            *) echo "::error::La API respondió $status (se esperaba 200)."; exit 1 ;;
+          esac
