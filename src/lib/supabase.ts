@@ -87,11 +87,7 @@ async function removeStoredValue(key: string): Promise<void> {
 }
 
 async function deleteIfPresent(key: string): Promise<void> {
-  const current = await SecureStore.getItemAsync(key);
-  if (current === null) {
-    return;
-  }
-
+  // deleteItemAsync es idempotente: evita una lectura previa del llavero por cada clave.
   await SecureStore.deleteItemAsync(key);
 }
 

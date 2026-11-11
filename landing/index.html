@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Kalendaria — Tu agenda, sin ruido</title>
+  <meta name="description" content="Kalendaria es una agenda personal sencilla: anota lo que hiciste y lo que tienes pendiente, sin alarmas, sin notificaciones y sin cuentas de Google.">
+  <meta name="theme-color" content="#F2ECEA">
+  <meta property="og:title" content="Kalendaria — Tu agenda, sin ruido">
+  <meta property="og:description" content="Calendario mensual, actividades con colores y tus datos en la nube. Descarga gratis para Android.">
+  <meta property="og:image" content="assets/icon.png">
+  <link rel="icon" href="assets/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #F2ECEA;
+      --surface: #FFFFFF;
+      --text: #1F2A2E;
+      --muted: #5A6A70;
+      --border: #D9D2CF;
+      --primary: #007A99;
+      --primary-hover: #00657F;
+      --on-primary: #FFFFFF;
+      --accent: #C25A2C;
+      --cat-reunion: #00A4CC;
+      --cat-pendiente: #E8723E;
+      --cat-personal: #6EAF8C;
+      --cat-trabajo: #8A6FD1;
+      --cat-otro: #8C8279;
+    }
+    @media (prefers-color-scheme: dark) {
+      :root:not([data-theme="light"]) {
+        --bg: #0E1C22;
+        --surface: #162A32;
+        --text: #F2ECEA;
+        --muted: #A9B8BD;
+        --border: #223A44;
+        --primary: #00A4CC;
+        --primary-hover: #26B6D8;
+        --on-primary: #0E1C22;
+        --accent: #F7A769;
+      }
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: var(--primary); }
+    .wrap { max-width: 1040px; margin: 0 auto; padding: 0 20px; }
+    header.top { padding: 20px 0; }
+    header.top img { height: 44px; width: auto; display: block; }
+
+    .hero { display: grid; gap: 40px; padding: 32px 0 64px; align-items: center; }
+    @media (min-width: 880px) { .hero { grid-template-columns: 1.1fr 0.9fr; padding: 56px 0 96px; } }
+    .eyebrow { color: var(--accent); font-weight: 600; font-size: 14px; letter-spacing: .04em; text-transform: uppercase; margin: 0 0 12px; }
+    h1 { font-size: clamp(34px, 6vw, 54px); line-height: 1.1; margin: 0 0 16px; letter-spacing: -0.02em; }
+    .lead { font-size: 18px; color: var(--muted); margin: 0 0 28px; max-width: 520px; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+      min-height: 52px; padding: 0 28px; border-radius: 14px;
+      background: var(--primary); color: var(--on-primary);
+      font: 600 16px 'Inter', sans-serif; text-decoration: none;
+      transition: background .15s ease, transform .15s ease;
+    }
+    .btn:hover { background: var(--primary-hover); }
+    .btn:active { transform: scale(.98); }
+    .btn:focus-visible, a:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+    .btn svg { width: 20px; height: 20px; flex: none; }
+    .meta { margin: 14px 0 0; font-size: 14px; color: var(--muted); }
+
+    .calendar {
+      background: var(--surface); border: 1px solid var(--border); border-radius: 24px;
+      padding: 20px; max-width: 360px; margin: 0 auto; width: 100%;
+      box-shadow: 0 12px 40px rgba(31, 42, 46, .10);
+    }
+    .calendar h2 { font-size: 18px; margin: 0 0 14px; }
+    .grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; text-align: center; font-size: 14px; }
+    .grid .wd { color: var(--muted); font-weight: 600; font-size: 12px; padding-bottom: 4px; }
+    .grid .d { aspect-ratio: 1; border-radius: 10px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; }
+    .grid .d.dim { color: var(--muted); opacity: .55; }
+    .grid .d.today { background: color-mix(in srgb, var(--primary) 16%, transparent); color: var(--primary); font-weight: 700; }
+    .dots { display: flex; gap: 3px; height: 6px; }
+    .dots i { width: 6px; height: 6px; border-radius: 50%; display: block; }
+
+    section { padding: 56px 0; }
+    section h2.title { font-size: clamp(26px, 4vw, 34px); margin: 0 0 8px; letter-spacing: -0.01em; }
+    .sub { color: var(--muted); margin: 0 0 32px; max-width: 560px; }
+    .cards { display: grid; gap: 16px; }
+    @media (min-width: 720px) { .cards { grid-template-columns: repeat(3, 1fr); } }
+    .card { background: var(--surface); border: 1px solid var(--border); border-radius: 20px; padding: 24px; }
+    .card h3 { margin: 0 0 6px; font-size: 18px; }
+    .card p { margin: 0; color: var(--muted); font-size: 15px; }
+
+    ol.steps { list-style: none; counter-reset: s; margin: 0; padding: 0; display: grid; gap: 14px; max-width: 640px; }
+    ol.steps li { counter-increment: s; display: flex; gap: 16px; align-items: flex-start; background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 18px 20px; }
+    ol.steps li::before { content: counter(s); flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--primary); color: var(--on-primary); font-weight: 700; display: grid; place-items: center; }
+    ol.steps strong { display: block; }
+    ol.steps span { color: var(--muted); font-size: 15px; }
+
+    .note { margin-top: 20px; padding: 16px 20px; border-left: 4px solid var(--accent); background: var(--surface); border-radius: 0 12px 12px 0; color: var(--muted); font-size: 15px; max-width: 640px; }
+
+    .cta { text-align: center; }
+    .cta .sub { margin-left: auto; margin-right: auto; }
+    footer { padding: 32px 0 48px; border-top: 1px solid var(--border); color: var(--muted); font-size: 14px; text-align: center; }
+    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } .btn { transition: none; } }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="top">
+      <img src="assets/logo-name.png" alt="Kalendaria">
+    </header>
+
+    <main>
+      <div class="hero">
+        <div>
+          <p class="eyebrow">Agenda personal</p>
+          <h1>Tu agenda, sin ruido.</h1>
+          <p class="lead">Anota lo que hiciste y lo que tienes pendiente en un calendario claro. Sin alarmas, sin notificaciones y sin depender de Google. Tus datos quedan guardados en tu cuenta.</p>
+          <a class="btn" id="download" href="https://github.com/KBRGarcia/Kalendaria-App/releases/latest/download/kalendaria.apk" download>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3v12m0 0 4.5-4.5M12 15l-4.5-4.5M4 20h16"/></svg>
+            Descargar para Android
+          </a>
+          <p class="meta">Gratis · Android 8.0 o superior · Archivo APK</p>
+        </div>
+
+        <div class="calendar" role="img" aria-label="Vista previa del calendario mensual con actividades de colores">
+          <h2>Octubre 2026</h2>
+          <div class="grid" id="preview">
+            <div class="wd">L</div><div class="wd">M</div><div class="wd">X</div><div class="wd">J</div><div class="wd">V</div><div class="wd">S</div><div class="wd">D</div>
+          </div>
+        </div>
+      </div>
+
+      <section aria-labelledby="why">
+        <h2 class="title" id="why">Hecha para usarse en segundos</h2>
+        <p class="sub">Pensada para quien quiere ver qué tiene un día, anotarlo y seguir con lo suyo.</p>
+        <div class="cards">
+          <div class="card"><h3>Calendario de un vistazo</h3><p>Cada día muestra puntos de color según el tipo de actividad: reunión, pendiente, personal, trabajo u otro.</p></div>
+          <div class="card"><h3>Pasado y futuro</h3><p>Registra lo que ya hiciste o planifica lo que viene. Crear, editar y eliminar toma un par de toques.</p></div>
+          <div class="card"><h3>Tus datos, a salvo</h3><p>Se guardan en la nube con tu cuenta, así no los pierdes al cambiar de teléfono. También puedes consultarlos sin conexión.</p></div>
+        </div>
+      </section>
+
+      <section aria-labelledby="install">
+        <h2 class="title" id="install">Cómo instalarla</h2>
+        <p class="sub">Mientras llega a Google Play, se instala directamente desde el archivo APK.</p>
+        <ol class="steps">
+          <li><div><strong>Descarga el archivo</strong><span>Toca “Descargar para Android” desde tu teléfono.</span></div></li>
+          <li><div><strong>Ábrelo</strong><span>Al terminar, toca la notificación de descarga o busca <em>kalendaria.apk</em> en tus descargas.</span></div></li>
+          <li><div><strong>Permite la instalación</strong><span>Si Android lo pide, autoriza “Instalar apps desconocidas” para tu navegador. Solo es necesario esta vez.</span></div></li>
+          <li><div><strong>Crea tu cuenta</strong><span>Regístrate con tu correo y una contraseña y empieza a anotar.</span></div></li>
+        </ol>
+        <p class="note">Android muestra un aviso estándar para cualquier app instalada fuera de la tienda. Descarga Kalendaria solo desde esta página.</p>
+      </section>
+
+      <section class="cta" aria-labelledby="go">
+        <h2 class="title" id="go">Empieza hoy</h2>
+        <p class="sub">Descárgala gratis y ten tu agenda ordenada en minutos.</p>
+        <a class="btn" href="https://github.com/KBRGarcia/Kalendaria-App/releases/latest/download/kalendaria.apk" download>Descargar para Android</a>
+      </section>
+    </main>
+
+    <footer>
+      <p>© <span id="year">2026</span> Kalendaria. Versión para iOS no disponible por ahora.</p>
+    </footer>
+  </div>
+
+  <script>
+    (function () {
+      document.getElementById('year').textContent = new Date().getFullYear();
+
+      // Vista previa decorativa: octubre 2026 empieza en jueves; semana desde lunes.
+      var colors = ['--cat-reunion', '--cat-pendiente', '--cat-personal', '--cat-trabajo', '--cat-otro'];
+      var marks = { 2: [0], 6: [1, 2], 9: [3], 14: [0, 1, 4], 15: [2], 21: [0], 23: [3, 1], 28: [4, 0, 2, 3] };
+      var grid = document.getElementById('preview');
+      var html = '';
+      for (var i = 0; i < 3; i++) html += '<div class="d dim"></div>';
+      for (var day = 1; day <= 31; day++) {
+        var dots = (marks[day] || []).slice(0, 3).map(function (c) {
+          return '<i style="background:var(' + colors[c] + ')"></i>';
+        }).join('');
+        html += '<div class="d' + (day === 14 ? ' today' : '') + '"><span>' + day + '</span><span class="dots">' + dots + '</span></div>';
+      }
+      grid.insertAdjacentHTML('beforeend', html);
+    })();
+  </script>
+</body>
+</html>
