@@ -50,3 +50,7 @@ Landing page profesional + APK alojado como asset de una GitHub Release. No se c
 - Añadir capturas reales de la app a la landing.
 - Dominio propio (opcional) apuntando a Vercel.
 - Política de privacidad: ya existe en `landing/privacidad.html`; revisa que el contacto sea el que quieres publicar (`contactEmail` en `landing/config.js`).
+
+## Documentación relacionada
+
+`08-Guia-Produccion.md` (paso a paso), `09-Supabase.md`, `10-Vercel.md`, `11-Expo.md`, `12-Herramientas-Dependencias.md` y `13-Backend-Flujo.md`.

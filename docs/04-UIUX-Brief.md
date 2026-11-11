@@ -1,9 +1,9 @@
 # UI/UX Design Brief
 ## Kalendaria — App de Agenda y Calendario Personal
 
-**Versión:** 1.0
-**Fecha:** Octubre 2026
-**Estado:** Aprobado
+**Versión:** 1.1
+**Fecha:** Octubre 2026 · actualizado en noviembre 2026
+**Estado:** Implementado (v1.0.0). Ver §16 (landing) y §10 (contraste medido)
 **Documentos base:** `01-PRD.md`, `02-TRD.md`
 
 ---
@@ -398,41 +398,35 @@ Aplazada. El plan gratuito de Supabase no permite editar las plantillas, así qu
 6. Botón primario "Verificar".
 7. Enlace "Reenviar código" (bodyStrong, primary), deshabilitado 30s con countdown.
 
-### 7.5. Calendario mensual (Home)
-Estructura vertical:
+### 7.5. Calendario mensual (Home) con panel del día
+Pantalla principal. Estructura vertical (actualizada en nov 2026: ya **no existe** una pantalla de detalle del día):
 1. Header (safe area + 16px):
-- Izquierda: Título del mes "Octubre 2026" (h1).
+- Izquierda: Título del mes "Noviembre 2026" (h1).
 - Derecha: Botón de ajustes (icono settings-outline).
 2. Navegador de mes:
-- Fila con: chevron-back | "Octubre 2026" (h3) | chevron-forward.
-- Opcional: gestos swipe en el grid.
+- Fila con: chevron-back | "Noviembre 2026" (h3) | chevron-forward.
 3. Días de la semana (L M X J V S D):
 - Fila con 7 columnas, texto small, textSecondary, centrado.
-4. Grid del mes (6 filas x 7 columnas):
-- Cada celda: 44px de alto, radio 12px.
+4. Fila de estado (altura mínima 20px, para que el grid no salte): indicador de carga o mensaje de error.
+5. Grid del mes (6 filas x 7 columnas = 42 celdas):
+- Cada celda: 44px de alto mínimo, radio 12px. Estado *pressed*: opacidad 0.7.
 - Número del día (body, text).
 - Si es hoy: fondo primary al 15%, número en primary y bodyStrong.
 - Si está seleccionado: fondo primary, número en blanco.
-- Debajo del número: dots de categorías (máx 3).
-- Padding de la celda: sm (8px).
-5. Leyenda de categorías (opcional, colapsable):
-- Fila horizontal scrollable con pills de categoría.
-6. Espacio inferior: reservado para safe area.
-7. Espaciado: padding horizontal lg (16px).
+- Días de otros meses: texto atenuado; tocarlos salta a ese mes.
+- Debajo del número: dots de categorías (máx 3, +N si hay más).
+6. **Panel del día seleccionado** (ocupa el resto de la pantalla):
+- Línea divisoria sutil (divider).
+- Fecha completa "Miércoles, 11 de noviembre de 2026" (h3) y conteo "3 actividades" (caption, textSecondary).
+- Lista de actividades (FlatList, gap 12px) con Cards de actividad (ver 5.3). Tocar una card abre la hoja de edición.
+- Estado vacío (icono, título, descripción) si no hay actividades.
+- La lista deja espacio inferior para el FAB y la safe area.
+7. FAB "+" en bottom-right (sobre la safe area): crea una actividad en el día seleccionado.
+8. Selección por defecto: hoy al abrir; al cambiar de mes, hoy (si es ese mes) o el día 1.
+9. Espaciado: padding horizontal lg (16px).
 
-### 7.6. Detalle del día
-Estructura vertical:
-
-1. Header:
-- Izquierda: chevron-back (volver al calendario).
-- Centro: Fecha completa "Martes, 14 de octubre" (h2).
-- Derecha: espacio vacío o icono de ajustes.
-2. Subtítulo "3 actividades" (caption, textSecondary), padding horizontal 16px.
-3. Lista de actividades:
-- FlatList con gap de 12px.
-- Cada ítem: Card de actividad (ver 5.3).
-- Estado vacío si no hay actividades.
-4. FAB "+" en bottom-right para crear actividad.
+### 7.6. (Eliminada) Detalle del día
+La antigua pantalla de detalle del día se sustituyó por el panel de 7.5. Se conservan los componentes `ActivityCard` y `EmptyState`, ahora usados dentro del panel.
 
 ### 7.7. Crear / Editar actividad
 Presentación: modal bottom sheet (slide-up).
@@ -458,6 +452,8 @@ Contenido:
 - Si es edición: botón icono trash-outline (color error) a la izquierda.
 - Botón primario "Guardar" a la derecha (flex 1).
 
+**Teclado (Android edge-to-edge):** la hoja se eleva sobre el teclado (`KeyboardAvoidingView` con `padding`) y su altura se limita al espacio libre; el contenido hace scroll. Login y registro usan el mismo comportamiento.
+
 ### 7.8. Ajustes
 Estructura vertical:
 1. Header: chevron-back + "Ajustes" (h1).
@@ -475,16 +471,16 @@ Estructura vertical:
 ## 8. Navegación
 
 ### 8.1. Patrón
-- Sin tab bar. La app usa un stack simple: Calendario → Día → Modal actividad.
+- Sin tab bar. La app usa un stack simple: Calendario (con panel del día) → Hoja modal de actividad. Ajustes se abre desde el header.
 - Ajustes se accede desde el icono en el header del calendario.
 
 ### 8.2. Transiciones
-- Push (Calendario → Día): slide horizontal estándar de iOS / fade + slide de Android.
-- Modal (actividad): slide-up (bottom sheet).
+- Calendario → Ajustes: push estándar de la plataforma. Tocar un día **no navega**: actualiza el panel.
+- Hoja de actividad (crear / ver-editar): slide-up (bottom sheet) sobre el calendario, que permanece visible tras el fondo atenuado.
 - Volver: slide inverso automático.
 
 ### 8.3. Gestos
-- Swipe horizontal en el grid del calendario: cambiar de mes (habilitado en MVP).
+- Swipe horizontal en el grid del calendario: cambiar de mes (previsto; en la v1.0.0 el cambio de mes se hace con los botones de flecha).
 - Swipe down en modal: cerrar (con confirmación si hay cambios sin guardar).
 
 ---
@@ -505,13 +501,24 @@ Regla: las animaciones son sutiles y nunca bloquean la interacción.
 ---
 
 ## 10. Accesibilidad
-- Contraste:
--- Texto principal sobre background (light): ratio ≥ 12:1 ✓
--- Texto principal sobre background (dark): ratio ≥ 12:1 ✓
--- Texto primary sobre background: ratio ≥ 4.5:1 ✓
+- Contraste **medido** (WCAG 2.x, relación de luminancia; mínimo 4.5:1 para texto normal, 3:1 para texto grande y componentes):
+
+| Combinación | Tema claro | Tema oscuro |
+|---|---|---|
+| Texto principal sobre fondo | 12.6:1 ✓ | 13.2:1 ✓ |
+| Texto secundario sobre fondo | 4.8:1 ✓ | 5.8:1 ✓ |
+| Turquesa `#00A4CC` como **texto o ícono** sobre fondo | 2.5:1 ✗ | 6.0:1 ✓ |
+| Texto blanco sobre botón turquesa `#00A4CC` | 2.9:1 ✗ (grande/negrita ≥ 3:1 no se alcanza) | — |
+| Texto blanco sobre turquesa oscuro `#007A99` | 4.9:1 ✓ | — |
+| Texto `#0E1C22` sobre botón turquesa (tema oscuro) | — | 6.0:1 ✓ |
+| Coral `#E8723E` como texto sobre fondo | 2.6:1 ✗ | 5.7:1 ✓ |
+
+> **Corrección a la versión 1.0:** el brief afirmaba "texto primary sobre background ≥ 4.5:1 ✓". La medición real en tema claro es 2.5:1. El turquesa puro es válido para **elementos no textuales** (puntos, bordes, fondos de selección), pero no para texto pequeño.
+>
+> **Recomendación pendiente para la app móvil (no aplicada):** en tema claro, usar turquesa oscuro `#007A99` para botones primarios con texto blanco y para texto/enlaces turquesa; el coral como texto solo en tema oscuro o con `coralOscuro` `#C25A2C`. La **landing** ya aplica esta regla (§16). Decisión de marca pendiente.
 - Tamaño de toque mínimo: 44x44pt.
-- Soporte de Dynamic Type / fontScale: usar <Text> con allowFontScaling (por defecto true).
-- Labels para lectores de pantalla: accessibilityLabel en botones con icono (ej: FAB → "Crear nueva actividad").
+- Soporte de Dynamic Type / fontScale: usar `<Text>` con `allowFontScaling` (por defecto true).
+- Labels para lectores de pantalla: `accessibilityLabel` en botones con icono (ej: FAB → "Crear nueva actividad"); las celdas del calendario describen fecha y número de actividades.
 - Focus visible: bordes de foco claros en inputs.
 
 ---
@@ -583,3 +590,22 @@ Contraste con la paleta: tomamos la sensación "playa tranquila" de la paleta de
 
 Cualquier decisión visual debe poder justificarse con este documento. Si hay dudas, consultar antes de improvisar.
 
+---
+
+## 16. Landing page (sitio web de descarga)
+
+La landing (`landing/`) es una extensión web de la marca y sigue los mismos tokens del brief: paleta de §2, tipografía Inter de §3 (con escala adaptada: el *display* crece hasta 48 px), espaciado base 4 px de §4, radios de §4.3 y las reglas de modo oscuro de §11.
+
+**Adaptaciones por accesibilidad (medidas en §10):**
+- Botón primario: fondo `#007A99` con texto blanco en tema claro (4.9:1); en tema oscuro, fondo `#00A4CC` con texto `#0E1C22` (6.0:1).
+- Enlaces: color de texto principal con subrayado turquesa (el turquesa no alcanza contraste como texto en claro).
+- Badges de categoría: punto de color + texto neutro (el durazno y el celeste no alcanzan contraste como texto sobre su propio tinte).
+- Texto secundario sobre superficies secundarias en oscuro: texto principal atenuado, porque `#9B938F` sobre `#1B333C` da 4.4:1.
+
+**Comportamiento:**
+- Selector de tema Claro / Oscuro / Sistema (segmented control como en Ajustes) con preferencia recordada.
+- Demostración interactiva del calendario (navegación de meses, selección de día, panel de actividades con datos de ejemplo), fiel al diseño real de la app.
+- Zonas táctiles ≥ 44 px, foco visible, enlace "Saltar al contenido", `prefers-reduced-motion` respetado.
+- Sin estilos ni scripts en línea (CSP estricta). Sin desbordamiento horizontal entre 320 y 1920 px.
+
+Detalle técnico en `10-Vercel.md`.

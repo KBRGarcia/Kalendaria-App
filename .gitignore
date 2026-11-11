@@ -39,3 +39,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# respaldos de base de datos (contienen datos de usuarios)
+backups/

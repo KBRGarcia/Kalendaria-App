@@ -136,39 +136,30 @@ Verifica las cifras vigentes en [supabase.com/pricing](https://supabase.com/pric
 - **Sin copias de seguridad automáticas descargables** en Free: haz respaldos manuales (2.9).
 - Límites de almacenamiento, usuarios activos mensuales y transferencia: muy por encima de lo que necesita una agenda personal, pero revísalos si crece.
 
-### 2.8 (Opcional) Mantener el proyecto despierto
+### 2.8 Mantener el proyecto despierto (ya automatizado)
 
-Un trabajo programado en GitHub que consulte la API cada pocos días cuenta como actividad. Crea `.github/workflows/keepalive.yml`:
+El repositorio incluye `.github/workflows/keepalive.yml`: cada 3 días hace una consulta de **solo lectura** a la API (`GET /rest/v1/activities?select=id&limit=1`) y falla de forma visible si la API no responde 200. Solo necesita **dos secretos** que debes crear tú en GitHub:
 
-```yaml
-name: Supabase keep-alive
-on:
-  schedule: [{ cron: '0 12 */3 * *' }]
-  workflow_dispatch:
-jobs:
-  ping:
-    runs-on: ubuntu-latest
-    steps:
-      - run: |
-          curl -fsS "$SUPABASE_URL/rest/v1/activities?select=id&limit=1" \
-            -H "apikey: $SUPABASE_ANON_KEY" -H "Authorization: Bearer $SUPABASE_ANON_KEY"
-        env:
-          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
-```
+1. Repositorio → **Settings → Secrets and variables → Actions → New repository secret**.
+2. `SUPABASE_URL` = la URL del proyecto (`https://<ref>.supabase.co`).
+3. `SUPABASE_ANON_KEY` = la clave **publicable** (`sb_publishable_…`). Nunca la `service_role` ni `sb_secret_…`.
+4. Pestaña **Actions → Supabase keep-alive → Run workflow** para probarlo; debe terminar en verde ("Respuesta de la API: 200").
 
-Y en GitHub → **Settings → Secrets and variables → Actions** crea `SUPABASE_URL` y `SUPABASE_ANON_KEY` (los de producción). Solo la anon key: nunca la `service_role`.
+Notas: GitHub desactiva los workflows programados de repositorios **públicos** sin actividad durante ~60 días (te avisa por correo; se reactiva con un clic o con cualquier commit). Si un día falla, GitHub te envía un correo: significa que el proyecto está pausado o las claves cambiaron.
 
-### 2.9 Respaldo manual
-
-Con la cadena de conexión de **Project Settings → Database** (usa tu contraseña de base):
+### 2.9 Respaldo manual (ya automatizado)
 
 ```bash
-pg_dump "postgresql://postgres:<PASSWORD>@db.<ref>.supabase.co:5432/postgres" \
-  --schema=public --no-owner -f respaldo-$(date +%F).sql
+npm run db:backup
 ```
 
-Guarda el archivo fuera del repo. Hazlo antes de cualquier cambio de esquema.
+Requisitos: `pg_dump` (`sudo apt install postgresql-client`) y la variable `SUPABASE_DB_URL`. Obtén la cadena en Supabase → **Connect → Session pooler** (compatible con IPv4), sustituye `[YOUR-PASSWORD]` por la contraseña de tu base y guárdala en `.env.backup.local` (ignorado por git) como:
+
+```
+SUPABASE_DB_URL=postgresql://postgres.<ref>:<PASSWORD>@aws-0-<region>.pooler.supabase.com:5432/postgres
+```
+
+Genera en `backups/` (ignorada por git) dos archivos: el esquema y datos de la app, y los datos de `auth.users` (cuentas y hashes de contraseña: **sensibles**). Guarda una copia fuera del equipo. Hazlo antes de cualquier migración y con la frecuencia que te dé tranquilidad (p. ej. semanal).
 
 ### 2.10 Cambios futuros del esquema
 
@@ -476,3 +467,23 @@ npx eas-cli env:list --environment production
 npx eas-cli credentials         # respaldar el keystore
 gh release create vX.Y.Z kalendaria.apk --title "..." --notes "..."
 ```
+
+---
+
+## 13. Operación continua (después del lanzamiento)
+
+Todo lo recurrente, en un solo lugar:
+
+| Tarea | Frecuencia | Cómo | Automatizado |
+|---|---|---|---|
+| Evitar la pausa de Supabase | Cada 3 días | `keepalive.yml` (ver 2.8) | ✅ (requiere los 2 secretos) |
+| Respaldo de la base | Antes de cambios de esquema y periódico | `npm run db:backup` (ver 2.9) | Script listo; lo ejecutas tú |
+| Verificar cada APK nuevo | En cada release | `npm run release:verify` (ver 4.5) | Script listo |
+| Publicar versión nueva | Cuando haya cambios | Sección 8 | Parcial |
+| Revisar el keep-alive | Mensual | GitHub → Actions: debe estar en verde | — |
+| Mantener el keystore | Siempre | Copia fuera del repositorio; no borrar la de EAS | — |
+| Actualizar dependencias | Cada 1–2 meses | `docs/12` §8: `npx expo install --fix`, tests, build de prueba | — |
+| Limpiar cuentas de prueba | Tras cada prueba | Supabase → Authentication → Users | — |
+| Vigilar el plan gratuito | Trimestral | Panel de Supabase/Vercel/EAS: uso y límites | — |
+
+**Qué NO puede automatizar el repositorio** (depende de tus cuentas): crear los secretos de GitHub, la contraseña de la base de datos, el respaldo del keystore, la release en GitHub y el despliegue en Vercel.

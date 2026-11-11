@@ -1,15 +1,57 @@
+# Implementation Plan
+## Kalendaria — App de Agenda y Calendario Personal
 
-## Estado del plan (actualizado noviembre 2026)
+**Versión:** 1.1
+**Fecha:** Octubre 2026 · actualizado en noviembre 2026
+**Estado:** Fases 0–10 completadas; fase 11 (lanzamiento) en curso
+**Documentos base:** `01-PRD.md`, `02-TRD.md`, `04-UIUX-Brief.md`, `05-Backend-Schema.md`
 
-| Fase | Estado |
-|---|---|
-| 0–8 | Completadas (setup, Supabase, temas, auth, calendario, día, CRUD, ajustes, caché offline). |
-| Cambio de UX (nov 2026) | La ruta `day/[date]` se eliminó: tocar un día lo selecciona y muestra sus actividades bajo el calendario (`DayActivities`), con botón de crear. Solo crear y ver/editar una actividad abren otra pantalla (hoja modal). |
-| 9 — Pulido y QA | Casi completa: error boundary, animaciones, accesibilidad y estados de error hechos. Pendiente: QA manual en dispositivos reales Android/iOS y verificación de contrastes. |
-| 10 — Build EAS | APK de producción v1.0.0 (versionCode 3) compilado, verificado y probado en dispositivo. Pendiente: release en GitHub con `kalendaria.apk`, despliegue de la landing en Vercel y verificación final (ver `08-Guia-Produccion.md`). Distribución: `07-Distribucion.md`. |
+---
 
-**Siguiente fase: cerrar Fase 9 (QA en dispositivo) y pasar a Fase 10.**
-Pruebas: `npm test` (46 pruebas con `node --test`, sin dependencias nuevas). Deuda técnica conocida: TRD §15 prevé ESLint/Prettier, aún sin instalar; no hay pruebas de componentes ni E2E.
+## 1. Cómo usar este documento
+
+Este plan define **la secuencia exacta** en la que se construyó la app. Cada fase tiene:
+
+- **Objetivo:** qué se quiere lograr.
+- **Entregable:** qué debe existir al terminar la fase.
+- **Tareas:** pasos concretos.
+- **Criterio de "Done":** cómo verificar que está bien.
+
+**Regla de oro para el agente de IA:** no avanzar a la siguiente fase sin completar y validar la anterior. Cada fase debe compilar y funcionar antes de continuar.
+
+**Convención de commits:** Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`).
+
+> Las fases 0–10 se conservan como **registro de lo que se hizo**. Donde la implementación final difiere del plan original, hay una nota **"Actualización (nov 2026)"**.
+
+---
+
+## 2. Visión General de Fases y Estado
+
+| Fase | Nombre | Estimado | Estado |
+|---|---|---|---|
+| 0 | Setup del proyecto | 1-2 h | ✅ Completada (oct 2026) |
+| 1 | Configuración de Supabase | 1-2 h | ✅ Completada |
+| 2 | Sistema de temas y design tokens | 2-3 h | ✅ Completada |
+| 3 | Autenticación (registro y login) | 6-8 h | ✅ Completada |
+| 4 | Vista de Calendario Mensual | 6-8 h | ✅ Completada |
+| 5 | Detalle del día | 3-4 h | ✅ Completada → **rediseñada (nov 2026)**: ahora es un panel bajo el calendario |
+| 6 | CRUD de Actividades | 6-8 h | ✅ Completada |
+| 7 | Ajustes y Cierre de Sesión | 2-3 h | ✅ Completada |
+| 8 | Caché local y modo offline | 4-5 h | ✅ Completada |
+| 9 | Pulido, accesibilidad y QA | 4-6 h | ✅ Completada (QA en dispositivo real, nov 2026) |
+| 10 | Build de producción (EAS) | 2-4 h | ✅ Completada: APK 1.0.0 (versionCode 3) compilado, verificado y probado |
+| 11 | Lanzamiento y operación | — | 🔄 En curso: landing en Vercel y release en GitHub |
+| 12 | Google Play | — | ⏳ Futura (acceso a Play Console + eliminar cuenta) |
+
+**Cambios y hallazgos desde la versión 1.0 del plan:**
+
+- **Cambio de UX (nov 2026):** se eliminó la ruta `day/[date]`. Tocar un día lo selecciona y muestra sus actividades bajo el calendario (`DayActivities`); solo crear y abrir una actividad abren una hoja modal.
+- **Corrección de teclado en Android:** con *edge-to-edge* (SDK 58) hay que usar `KeyboardAvoidingView` con `padding` en ambas plataformas.
+- **Defecto crítico encontrado en el primer APK:** las variables `EXPO_PUBLIC_*` se leían con `process.env[nombre]`; en producción quedaban `undefined` y la app se cerraba al abrir. Corregido con lectura estática; `tests/env.test.ts` y `npm run release:verify` lo previenen.
+- **Pruebas:** `npm test` (48 pruebas con `node --test`, sin dependencias nuevas). Deuda técnica: ESLint/Prettier sin instalar; no hay pruebas de componentes ni E2E.
+- **Documentación añadida:** `07` a `13` (distribución, guía de producción, Supabase, Vercel, Expo, herramientas y flujo del backend) y `README.md`.
+
+**Siguiente paso:** cerrar la verificación final de la fase 11 (landing + descarga + instalación en un Android) y, cuando se resuelva Play Console, abordar la fase 12.
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -269,6 +311,7 @@ Pantalla principal con un grid de calendario mensual que muestre indicadores de 
 - Al montar: fetchMonth(currentMonth.year, currentMonth.month).
 - Al cambiar de mes: refetch.
 - Al tocar un día: router.push('/day/YYYY-MM-DD').
+- **Actualización (nov 2026):** ya no se navega; tocar un día lo selecciona y muestra el panel del día bajo el grid (ver fase 5).
 
 9. Añadir gestos de swipe (opcional, con react-native-gesture-handler).
 10. Commit:
@@ -278,11 +321,13 @@ feat(calendar): implement monthly calendar view with category indicators
 - Se ve el mes actual al abrir la app.
 - Los días con actividades muestran dots de color.
 - Se puede navegar entre meses.
-- Tocar un día navega al detalle (aunque la pantalla esté vacía aún).
+- Tocar un día navega al detalle (aunque la pantalla esté vacía aún). *(Actualización: ahora selecciona el día y muestra su panel.)*
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # FASE 5 — Vista de Detalle del Día
+
+> **Actualización (nov 2026):** esta fase se implementó como pantalla `day/[date].tsx` y después se **sustituyó** por el panel `DayActivities` integrado en `calendar.tsx` (componentes `DayScreen` y `DayDetail` eliminados). El criterio de "Done" actual: tocar un día muestra sus actividades bajo el calendario, con estado vacío y botón (+) para crear. `ActivityCard` y `EmptyState` se reutilizan.
 
 ## Objetivo
 Pantalla que muestra todas las actividades de un día concreto, con estado vacío y FAB para crear.
@@ -309,7 +354,7 @@ Pantalla que muestra todas las actividades de un día concreto, con estado vací
 - Obtener actividades del store (getActivitiesForDate(date)).
 - Renderizar FlatList de ActivityCard.
 - Si vacío → EmptyState.
-- FAB en bottom-right → router.push('/activity/new?date=YYYY-MM-DD').
+- FAB en bottom-right → router.push('/activity/new?date=YYYY-MM-DD') (ahora en `calendar.tsx`, con la fecha del día seleccionado).
 
 4. Commit:
 feat(day): add day detail view with activity list
@@ -509,6 +554,8 @@ chore(polish): accessibility, animations, and QA pass
 
 # FASE 10 — Build de Producción (EAS)
 
+> **Estado: completada (nov 2026).** Proyecto enlazado en EAS (`@kbrgarcia/kalendaria`); `eas.json` con perfiles `development`, `preview`, `production-apk` y `production` (todos con Node 22.13.0); `android.package = com.kalendaria.app`; variables de Supabase cargadas en los entornos `preview` y `production`; *keystore* generado por EAS y respaldado; APK 1.0.0 (`versionCode` 3) compilado, verificado con `npm run release:verify` y probado en un teléfono real. Detalle en `11-Expo.md` y `08-Guia-Produccion.md`.
+
 ## Objetivo
 Generar binarios de producción (APK/AAB para Android, IPA para iOS).
 
@@ -552,9 +599,55 @@ chore(build): configure EAS and generate preview build
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+# FASE 11 — Lanzamiento y Operación
+
+## Objetivo
+Publicar el APK y la landing, y dejar la operación mínima para que el servicio siga funcionando.
+
+## Entregable
+- Landing en Vercel con descarga del APK, política de privacidad y 404.
+- Release `v1.0.0` en GitHub con `kalendaria.apk`.
+- Operación: keep-alive de Supabase, respaldo de base y verificación de APK.
+
+## Tareas
+1. Landing (`landing/`): diseño con los tokens del brief, demo interactiva, tema claro/oscuro, CSP estricta, servidor local (`npm run landing`). ✅
+2. Documentación de distribución y guía de producción (`07`, `08`). ✅
+3. Configurar Supabase para producción: *Confirm email* desactivado, contraseña mínima 8, RLS verificado. ✅
+4. Cargar variables en EAS y compilar el APK de producción. ✅
+5. Verificar el APK (`npm run release:verify`) y probarlo en un teléfono. ✅
+6. Crear la release `v1.0.0` en GitHub con `kalendaria.apk` y actualizar `landing/config.js` (versión, tamaño, SHA-256). ✅
+7. Desplegar la landing en Vercel (Root Directory `landing`). ✅
+8. Verificación final desde un Android: descarga, instalación, huella, registro y creación de una actividad; después borrar la cuenta de prueba. 🔄
+9. Configurar los secretos `SUPABASE_URL` y `SUPABASE_ANON_KEY` en GitHub para el workflow `keepalive.yml`. ⏳
+10. Primer respaldo con `npm run db:backup` y copia fuera del equipo. ⏳
+
+## Criterio de "Done"
+- La landing carga, descarga el APK y la huella mostrada coincide con la del archivo.
+- Un usuario nuevo puede registrarse, crear actividades y ver sus datos al reinstalar o cambiar de teléfono.
+- El proyecto de Supabase no se pausa (keep-alive en verde) y existe al menos un respaldo.
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+# FASE 12 — Google Play (futura)
+
+## Objetivo
+Publicar la app en Google Play.
+
+## Requisitos previos
+- Resolver el acceso a Google Play Console (cuenta de desarrollador).
+- **Eliminación de cuenta desde la app** y URL web para solicitarla (requisito de Play): Edge Function de Supabase con `service_role` solo del lado servidor + opción en Ajustes.
+- Política de privacidad (ya existe en `landing/privacidad.html`), formulario de Seguridad de los datos, clasificación de contenido, capturas e ícono de 512×512.
+- AAB: `npm run build:aab`.
+- Las cuentas personales nuevas pueden exigir una prueba cerrada con testers antes de producción (confirmar requisitos vigentes en Play Console).
+
+## Criterio de "Done"
+- Ficha publicada; URL en `playStoreUrl` de `landing/config.js` (el botón aparece solo).
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 # Dependencias Entre Fases
 
-Fase 0 ────► Fase 1 ────► Fase 3 ────► Fase 4 ────► Fase 5 ────► Fase 6 ────► Fase 8 ────► Fase 9 ────► Fase 10
+Fase 0 ────► Fase 1 ────► Fase 3 ────► Fase 4 ────► Fase 5 ────► Fase 6 ────► Fase 8 ────► Fase 9 ────► Fase 10 ────► Fase 11 ────► Fase 12
                 │                          │                          │
                 └───► Fase 2 ──────────────┘                          │
                                                                        │
@@ -575,23 +668,25 @@ Aplicar en todas las fases:
 - Estilos: StyleSheet.create en el mismo archivo del componente.
 - Imports: usar alias (@/*), nunca rutas relativas largas.
 - Commits: Conventional Commits.
-- Sin console.log en código final (usar un logger condicional en dev).
+- Sin console.log en código final: los registros van dentro de `if (__DEV__)`.
+- Variables `EXPO_PUBLIC_*` solo con acceso estático (`process.env.EXPO_PUBLIC_X`); `tests/env.test.ts` lo vigila.
+- Antes de cada release: `npm run typecheck && npm test` y `npm run release:verify` sobre el APK.
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # Definition of Done Global
 
-Antes de considerar el MVP terminado:
+Estado del MVP (nov 2026):
 
-□ Todos los RF de 01-PRD.md implementados y funcionando.
-□ Todos los RNF cumplidos (rendimiento, seguridad, usabilidad, compatibilidad).
-□ Todas las pantallas del brief UI/UX implementadas.
-□ El esquema del backend está en producción con RLS activo.
-□ La app funciona en Android y iOS.
-□ La app funciona con y sin conexión (según lo definido).
-□ No hay warnings de TypeScript ni errores en consola.
-□ El APK/AAB de producción se genera correctamente.
-□ La documentación está actualizada.
+- [x] Todos los RF de 01-PRD.md implementados y funcionando (RF-01 a RF-12).
+- [x] RNF cumplidos en Android: rendimiento, seguridad, usabilidad, accesibilidad (con mejoras de contraste pendientes de decisión, ver `04-UIUX-Brief.md` §10).
+- [x] Todas las pantallas del brief UI/UX implementadas (la pantalla de detalle del día pasó a ser un panel).
+- [x] El esquema del backend está en producción con RLS activo.
+- [ ] La app funciona en iOS (no publicado; requiere cuenta de Apple Developer).
+- [x] La app funciona con y sin conexión (según lo definido).
+- [x] Sin warnings de TypeScript; sin errores en consola en las pruebas.
+- [x] El APK de producción se genera correctamente y se verifica antes de publicarlo.
+- [x] La documentación está actualizada (`docs/01`–`13` y `README.md`).
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -603,6 +698,10 @@ Fase   |   Riesgo   |   Mitigación
 6   |   Race conditions al crear/editar rápido   |   Deshabilitar botón durante la request; optimistic update con rollback
 8   |   Caché desactualizada   |   Invalidar caché en cada escritura y logout
 10   |   Build de iOS requiere cuenta Apple Developer   |   Iniciar trámite de cuenta si se planea iOS
+10   |   Variables EXPO_PUBLIC_* no incrustadas en el APK (la app se cierra al abrir)   |   Lectura estática, tests/env.test.ts y npm run release:verify
+10   |   Pérdida del keystore de Android   |   Respaldo con `npx eas-cli credentials` fuera del repositorio
+11   |   Pausa del proyecto de Supabase por inactividad (plan gratuito)   |   Workflow keepalive.yml y respaldo con npm run db:backup
+11   |   Desarrollo y producción comparten proyecto de Supabase   |   Cuenta de prueba aparte, respaldo antes de cambios de esquema, migraciones aditivas
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -610,8 +709,10 @@ Fase   |   Riesgo   |   Mitigación
 
 Antes de entregar al cliente:
 
-□ App instalable en Android (APK).
-□ App instalable en iOS (si aplica).
-□ Documentación de uso básica (opcional).
-□ Cuenta de prueba creada para demo.
-□ Contacto de soporte para el cliente.
+- [x] App instalable en Android (APK, descarga desde la landing).
+- [ ] App instalable en iOS (no aplica por ahora).
+- [x] Documentación de uso básica (`README.md` y `docs/`).
+- [ ] Cuenta de prueba creada para demo (usar una cuenta propia y borrarla después).
+- [ ] Contacto de soporte para el cliente (`contactEmail` en `landing/config.js`, o la página de Issues).
+- [ ] Respaldo del keystore guardado fuera del repositorio. *(hecho; mantener la copia segura)*
+- [ ] Secretos de GitHub para el keep-alive configurados.

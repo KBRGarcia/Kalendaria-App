@@ -1,10 +1,11 @@
 # Backend Schema
 ## Kalendaria — App de Agenda y Calendario Personal
 
-**Versión:** 1.0
-**Fecha:** Octubre 2026
-**Estado:** Aprobado
+**Versión:** 1.1
+**Fecha:** Octubre 2026 · actualizado en noviembre 2026
+**Estado:** Aplicado en Supabase (migraciones 001–005) y verificado
 **Documentos base:** `01-PRD.md`, `02-TRD.md`
+**Documentos relacionados:** `09-Supabase.md` (el servicio), `13-Backend-Flujo.md` (flujo de datos y peticiones HTTP)
 **Plataforma:** Supabase (PostgreSQL + Auth + RLS)
 
 ---
@@ -100,7 +101,7 @@ updated_at   |   timestamptz   |   NO   |   now()   |   Fecha de última modific
 
 ### 3.4. Reglas de negocio asociadas
 
-- last_login_at se actualiza al completar el registro o el login con sesión.
+- last_login_at se actualiza al completar el registro o el login con sesión. La llamada es **no bloqueante**: si falla, el acceso del usuario continúa.
 - La regla de los 30 días y el código de correo no se aplican. Vuelven con el plan de pago.
 
 ### 3.5. Políticas RLS
@@ -280,7 +281,9 @@ El código de 6 dígitos y la caducidad de 600 segundos se configuran cuando hay
    ├─────────────────────────────────────►│
    │ (App navega a /(app)/calendar)       │
 
-Si Confirm email sigue activo, la respuesta trae `session: null`. La app muestra el error y no abre pantalla de código.
+Si Confirm email sigue activo, la respuesta trae `session: null`. La app muestra un error genérico ("No se pudo completar el registro en este momento") y no abre pantalla de código. Si el correo ya existe, `user.identities` llega vacío y la app muestra "Ese correo ya tiene una cuenta".
+
+> **Verificado (nov 2026):** el estado público de Auth del proyecto expone `mailer_autoconfirm`; debe ser `true` para que el registro funcione.
 
 ### 5.3. Flujo de Login
 
@@ -314,8 +317,13 @@ BEGIN
 END;
 $$;
 
+-- En PostgreSQL una función nueva es ejecutable por PUBLIC (y en Supabase también por anon).
+REVOKE ALL ON FUNCTION public.update_last_login() FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.update_last_login() FROM anon;
 -- Permitir que usuarios autenticados ejecuten la función
 GRANT EXECUTE ON FUNCTION public.update_last_login() TO authenticated;
+
+Verificado: llamada como `anon` → `permission denied for function update_last_login` (42501).
 
 Llamada desde el cliente:
 
@@ -323,33 +331,30 @@ await supabase.rpc('update_last_login');
 
 ### 5.5. Manejo de sesión en el cliente
 
-// src/lib/supabase.ts
+Código real en `src/lib/supabase.ts` (resumen):
+
+```ts
 import 'react-native-url-polyfill/auto';
 import { createClient } from '@supabase/supabase-js';
 import * as SecureStore from 'expo-secure-store';
+import type { Database } from '@/types/database';
 
-const ExpoSecureStoreAdapter = {
-  getItem: (key: string) => SecureStore.getItemAsync(key),
-  setItem: (key: string, value: string) => SecureStore.setItemAsync(key, value),
-  removeItem: (key: string) => SecureStore.deleteItemAsync(key),
-};
+// Android limita cada valor de SecureStore a 2048 bytes y una sesión de Supabase lo supera:
+// el adaptador parte el valor en trozos de 1800 caracteres (clave.chunk-count, clave.chunk.N).
+const secureStoreAdapter = { getItem, setItem, removeItem };   // ver el archivo
 
-export const supabase = createClient(
-  process.env.EXPO_PUBLIC_SUPABASE_URL!,
-  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!,
-  {
-    auth: {
-      storage: ExpoSecureStoreAdapter,
-      autoRefreshToken: true,
-      persistSession: true,
-      detectSessionInUrl: false,
-    },
-  }
+// IMPORTANTE: acceso ESTÁTICO a process.env.EXPO_PUBLIC_X. Expo lo sustituye al compilar;
+// process.env[nombre] devuelve undefined en el APK y la app se cierra al abrir.
+export const supabase = createClient<Database>(
+  requirePublicEnv('EXPO_PUBLIC_SUPABASE_URL', process.env.EXPO_PUBLIC_SUPABASE_URL),
+  requirePublicEnv('EXPO_PUBLIC_SUPABASE_ANON_KEY', process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY),
+  { auth: { storage: secureStoreAdapter, autoRefreshToken: true, persistSession: true, detectSessionInUrl: false } },
 );
+```
 
-Decisión de Fase 0: este adaptador se mantiene. La guía rápida de Supabase para Expo (octubre 2026) usa `expo-sqlite/localStorage` y `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Aquí la sesión va en SecureStore y la clave sigue llamándose `EXPO_PUBLIC_SUPABASE_ANON_KEY`. No sustituyas ninguna de las dos cosas sin decidirlo antes. No importes este módulo en el layout mientras el `.env.local` esté vacío.
+Decisión de Fase 0: este adaptador se mantiene. La guía rápida de Supabase para Expo usa `expo-sqlite/localStorage` y `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY`. Aquí la sesión va en SecureStore y la variable sigue llamándose `EXPO_PUBLIC_SUPABASE_ANON_KEY`. No sustituyas ninguna de las dos cosas sin decidirlo antes. Los proyectos nuevos de Supabase entregan una clave con formato `sb_publishable_…` en lugar del JWT `anon`; el cliente funciona con ambas.
 
---- 
+---
 
 ## 6. Tipos TypeScript (generados por Supabase)
 
@@ -426,141 +431,86 @@ export type Database = {
   };
 };
 
-Tipos de dominio (en src/types/activity.ts):
+Tipos de dominio reales (`src/types/activity.ts`):
 
-export type ActivityCategory =
-  | 'reunion'
-  | 'pendiente'
-  | 'personal'
-  | 'trabajo'
-  | 'otro';
-
-export interface Activity {
-  id: string;
-  user_id: string;
-  date: string;          // YYYY-MM-DD
-  title: string;
-  category: ActivityCategory;
-  note: string | null;
-  created_at: string;    // ISO 8601
-  updated_at: string;
-}
+```ts
+export type Activity = Tables<'activities'>;   // derivado de database.ts; category llega como string
 
 export interface ActivityCreateInput {
-  date: string;
+  date: string;                 // YYYY-MM-DD
   title: string;
-  category: ActivityCategory;
+  category: ActivityCategory;   // 'reunion' | 'pendiente' | 'personal' | 'trabajo' | 'otro'
   note?: string;
 }
 
-export interface ActivityUpdateInput {
-  title?: string;
-  category?: ActivityCategory;
-  note?: string | null;
+export interface ActivityUpdateInput {   // en el código real los tres campos son obligatorios
+  title: string;
+  category: ActivityCategory;
+  note: string | null;
 }
+```
 
-export interface Profile {
-  id: string;
-  email: string;
-  last_login_at: string | null;
-  theme_preference: 'light' | 'dark' | 'system';
-  created_at: string;
-  updated_at: string;
-}
+Nota: `database.ts` generado por la CLI tipa `category` como `string`; el código valida el valor con `isActivityCategory()` al leerlo (si llega uno desconocido, se muestra como "Otro").
 
 ---
 
 ## 7. Consultas Principales (capa de servicios)
 
+Código real en `src/services/activitiesService.ts` y `src/services/authService.ts`. Todas las funciones lanzan un `ActivityRequestError` / `AuthRequestError` con un mensaje ya en español.
+
 ### 7.1. activitiesService.fetchByMonth
 
-async function fetchByMonth(year: number, month: number): Promise<Activity[]> {
-  const start = format(new Date(year, month - 1, 1), 'yyyy-MM-dd');
-  const end = format(endOfMonth(new Date(year, month - 1, 1)), 'yyyy-MM-dd');
+```ts
+const ACTIVITY_COLUMNS = 'id, user_id, date, title, category, note, created_at, updated_at';
 
-  const { data, error } = await supabase
-    .from('activities')
-    .select('*')
-    .gte('date', start)
-    .lte('date', end)
-    .order('date', { ascending: true })
-    .order('created_at', { ascending: true });
-
-  if (error) throw error;
-  return data ?? [];
-}
+const range = monthRange(year, month);           // { start: '2026-11-01', end: '2026-11-30' }
+const { data, error } = await supabase
+  .from('activities')
+  .select(ACTIVITY_COLUMNS)
+  .gte('date', range.start).lte('date', range.end)
+  .order('date', { ascending: true })
+  .order('created_at', { ascending: true });
+```
 
 ### 7.2. activitiesService.create
 
-async function create(input: ActivityCreateInput): Promise<Activity> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('No autenticado');
-
-  const { data, error } = await supabase
-    .from('activities')
-    .insert({
-      user_id: user.id,
-      date: input.date,
-      title: input.title.trim(),
-      category: input.category,
-      note: input.note?.trim() || null,
-    })
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-}
+```ts
+const userId = await requireUserId();            // supabase.auth.getUser()
+await supabase.from('activities')
+  .insert({ user_id: userId, date, title: title.trim(), category, note: emptyToNull(note) })
+  .select(ACTIVITY_COLUMNS).single();
+```
 
 ### 7.3. activitiesService.update
 
-async function update(id: string, input: ActivityUpdateInput): Promise<Activity> {
-  const { data, error } = await supabase
-    .from('activities')
-    .update(input)
-    .eq('id', id)
-    .select()
-    .single();
-
-  if (error) throw error;
-  return data;
-}
+```ts
+await supabase.from('activities')
+  .update({ title: input.title.trim(), category: input.category, note: input.note })
+  .eq('id', id).select(ACTIVITY_COLUMNS).single();
+```
 
 ### 7.4. activitiesService.remove
 
-async function remove(id: string): Promise<void> {
-  const { error } = await supabase
-    .from('activities')
-    .delete()
-    .eq('id', id);
-
-  if (error) throw error;
-}
+```ts
+await supabase.from('activities').delete().eq('id', id);
+```
 
 ### 7.5. authService.updateLastLogin
 
-El cliente no lee `last_login_at` para decidir el acceso. Tras un registro o un login con sesión llama a la RPC:
+```ts
+await supabase.rpc('update_last_login');   // se invoca de forma no bloqueante tras signIn/signUp
+```
 
-async function updateLastLogin(): Promise<void> {
-  const { error } = await supabase.rpc('update_last_login');
-  if (error) throw error;
-}
+### 7.6. authService.updateThemePreference / loadThemePreference
 
-### 7.6. authService.updateThemePreference
+```ts
+await supabase.from('profiles').update({ theme_preference: pref }).eq('id', userId);
+await supabase.from('profiles').select('theme_preference').eq('id', userId).maybeSingle();
+```
 
-async function updateThemePreference(
-  pref: 'light' | 'dark' | 'system'
-): Promise<void> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) throw new Error('No autenticado');
+### 7.7. Peticiones HTTP equivalentes
 
-  const { error } = await supabase
-    .from('profiles')
-    .update({ theme_preference: pref })
-    .eq('id', user.id);
-
-  if (error) throw error;
-}
+La tabla completa de llamadas `supabase-js` → petición HTTP → SQL está en `13-Backend-Flujo.md` §4.
 
 ---
 
@@ -575,9 +525,10 @@ Clave   |   Contenido   |   Formato
 
 ### 8.2. Estrategia de invalidación
 
-- Al crear/editar/eliminar una actividad → invalidar caché del mes afectado.
-- Al iniciar sesión → limpiar toda la caché y recargar.
-- Al cerrar sesión → limpiar toda la caché.
+- Al crear/editar/eliminar una actividad → se **reescribe** la caché del mes afectado con el estado ya actualizado.
+- Al iniciar sesión o registrarse → limpiar toda la caché y recargar.
+- Al cerrar sesión → limpiar toda la caché (`clearAllCache` solo toca las claves de la caché y conserva el tema).
+- Si la caché está corrupta o no tiene la forma esperada, se ignora.
 
 ### 8.3. Estructura del caché
 
@@ -618,9 +569,15 @@ Importante: nunca commitear seeds con datos reales ni UUIDs de producción.
 
 ## 10. Backup y Recuperación
 
-- Supabase Free tier incluye backups automáticos diarios con retención de 7 días.
-- Para producción (si se escala), activar Point-in-Time Recovery (PITR) en plan Pro.
-- No se implementa backup manual en el MVP; la responsabilidad recae en Supabase.
+> **Corrección a la versión 1.0:** el documento afirmaba que el plan gratuito incluye copias automáticas diarias con 7 días de retención. El plan gratuito **no ofrece copias descargables automáticas** (verifica el estado de tu plan en el panel de Supabase). La responsabilidad del respaldo es del proyecto.
+
+- **Respaldo manual:** `npm run db:backup` (`scripts/backup-db.sh`) genera con `pg_dump`, en `backups/` (ignorada por git):
+  - `kalendaria-public-FECHA.sql`: esquema y datos de `public` (profiles, activities, funciones, RLS).
+  - `kalendaria-auth-FECHA.sql`: solo datos de `auth.users` y `auth.identities` (cuentas y hashes de contraseña). **Sensible**: no compartir ni subir.
+- Necesita `pg_dump` y `SUPABASE_DB_URL` (Connect → *Session pooler*, compatible con IPv4).
+- **Cuándo:** antes de cualquier migración y de forma periódica; guardar una copia fuera del equipo.
+- **Pausa por inactividad:** el workflow `.github/workflows/keepalive.yml` consulta la API cada 3 días.
+- Para producción con más usuarios: plan Pro con copias diarias y *Point-in-Time Recovery*.
 
 ---
 
@@ -652,61 +609,16 @@ El esquema está preparado para añadir sin migraciones destructivas:
 
 ## 13. Checklist de Validación del Esquema
 
-Antes de dar por bueno el backend, verificar:
+Estado tras la puesta en producción (nov 2026). "Verificado" = comprobado contra el proyecto real con operaciones de solo lectura.
 
-□ Todas las tablas tienen RLS activo.
-□ Todas las políticas RLS han sido probadas con usuarios distintos.
-□ El trigger handle_new_user crea correctamente un profiles al registrarse.
-□ Los CHECK constraints rechazan datos inválidos (título vacío, categoría inválida).
-□ Los timestamps created_at / updated_at se actualizan correctamente.
-□ El índice activities_user_date_idx se usa en queries de mes.
-□ La función RPC update_last_login solo puede ejecutarla un usuario autenticado sobre su propio perfil.
-□ Los tipos TypeScript generados coinciden con el esquema real.
-
-
----
-
-# 📄 Archivo 2: `06-Implementation-Plan.md`
-
-# Implementation Plan
-## Kalendaria — App de Agenda y Calendario Personal
-
-**Versión:** 1.0
-**Fecha:** Octubre 2026
-**Estado:** Aprobado
-**Documentos base:** `01-PRD.md`, `02-TRD.md`, `04-UIUX-Brief.md`, `05-Backend-Schema.md`
-
----
-
-## 1. Cómo usar este documento
-
-Este plan define **la secuencia exacta** en la que se debe construir la app. Cada fase tiene:
-
-- **Objetivo:** qué se quiere lograr.
-- **Entregable:** qué debe existir al terminar la fase.
-- **Tareas:** pasos concretos.
-- **Criterio de "Done":** cómo verificar que está bien.
-
-**Regla de oro para el agente de IA:** no avanzar a la siguiente fase sin completar y validar la anterior. Cada fase debe compilar y funcionar antes de continuar.
-
-**Convención de commits:** usar Conventional Commits (`feat:`, `fix:`, `chore:`, `docs:`). Al terminar cada fase, hacer commit con mensaje `feat(fase-N): <descripción>`.
-
----
-
-## 2. Visión General de Fases
-
-| Fase | Nombre | Duración estimada | Bloqueantes |
-|---|---|---|---|
-| 0 | Setup del proyecto | 1-2 h | Ninguno |
-| 1 | Configuración de Supabase | 1-2 h | Fase 0 |
-| 2 | Sistema de temas y design tokens | 2-3 h | Fase 0 |
-| 3 | Autenticación (registro y login) | 6-8 h | Fases 1, 2 |
-| 4 | Vista de Calendario Mensual | 6-8 h | Fase 3 |
-| 5 | Vista de Detalle del Día | 3-4 h | Fase 4 |
-| 6 | CRUD de Actividades (crear, editar, eliminar) | 6-8 h | Fase 5 |
-| 7 | Ajustes y Cierre de Sesión | 2-3 h | Fase 3 |
-| 8 | Caché local y modo offline | 4-5 h | Fases 4, 6 |
-| 9 | Pulido, accesibilidad y QA | 4-6 h | Todas |
-| 10 | Build de producción (EAS) | 2-4 h | Fase 9 |
-
-**Total estimado:** 40-55 horas de desarrollo efectivo.
+| Verificación | Estado |
+|---|---|
+| Todas las tablas tienen RLS activo | ✅ Verificado (sin sesión, `activities` y `profiles` devuelven `[]`); confirmar visualmente con `select tablename, rowsecurity from pg_tables where schemaname = 'public'` |
+| Políticas RLS probadas con usuarios distintos | ⏳ Pendiente de prueba manual con dos cuentas (recomendado antes de abrir el registro al público) |
+| El trigger `handle_new_user` crea el perfil al registrarse | ✅ Probado en uso real (el tema se guarda y se lee de `profiles`) |
+| Los `CHECK` rechazan datos inválidos | ✅ Definidos en las migraciones; la app valida antes de enviar (cubierto por pruebas) |
+| `created_at` / `updated_at` se mantienen | ✅ *Triggers* definidos en `003` |
+| El índice `activities_user_date_idx` sirve la consulta mensual | ✅ La consulta filtra por `user_id` (vía RLS) y rango de `date` |
+| `update_last_login` solo la ejecuta un usuario autenticado sobre su perfil | ✅ Verificado: como `anon` → `42501 permission denied` |
+| Los tipos TypeScript coinciden con el esquema | ✅ `src/types/database.ts` generado; `tsc` sin errores |
+| *Confirm email* desactivado | ✅ Requisito de configuración (el registro falla si está activo) |

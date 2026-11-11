@@ -44,7 +44,9 @@
     "doctor": "expo-doctor",
     "build:preview": "eas build --platform android --profile preview",
     "build:apk": "eas build --platform android --profile production-apk",
-    "build:aab": "eas build --platform android --profile production"
+    "build:aab": "eas build --platform android --profile production",
+    "release:verify": "bash scripts/verify-apk.sh",
+    "db:backup": "bash scripts/backup-db.sh"
   },
   "private": true,
   "overrides": {
