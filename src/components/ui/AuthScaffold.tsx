@@ -1,5 +1,5 @@
 import type { ReactElement, ReactNode } from 'react';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View, type ViewStyle } from 'react-native';
+import { KeyboardAvoidingView, ScrollView, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { spacing } from '@theme/spacing';
@@ -18,7 +18,8 @@ export function AuthScaffold({ children }: AuthScaffoldProps): ReactElement {
 
   return (
     <SafeAreaView style={[styles.screen, { backgroundColor: theme.colors.background }]}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.screen}>
+      {/* Con edge-to-edge (SDK 58) Android ya no redimensiona la ventana: 'padding' es necesario en ambas plataformas. */}
+      <KeyboardAvoidingView behavior="padding" style={styles.screen}>
         <ScrollView keyboardShouldPersistTaps="handled" contentContainerStyle={styles.content}>
           {children}
         </ScrollView>

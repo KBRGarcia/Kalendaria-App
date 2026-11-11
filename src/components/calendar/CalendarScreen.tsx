@@ -1,28 +1,34 @@
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { useCallback, useEffect, useState, type ReactElement } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactElement } from 'react';
 import { ActivityIndicator, AppState, StyleSheet, Text, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { DayActivities } from '@components/calendar/DayActivities';
 import { MonthGrid } from '@components/calendar/MonthGrid';
 import { MonthNavigator } from '@components/calendar/MonthNavigator';
 import { WeekdayHeader } from '@components/calendar/WeekdayHeader';
+import { Fab } from '@components/ui/Fab';
 import { IconButton } from '@components/ui/IconButton';
 import { useMonthActivities } from '@hooks/useMonthActivities';
-import { formatMonthTitle, isSameCalendarDay, shiftMonth } from '@lib/dates';
+import { formatMonthTitle, isSameCalendarDay, parseDateKey, shiftMonth, toDateKey } from '@lib/dates';
 import { useActivitiesStore } from '@store/activitiesStore';
 import { layout, spacing } from '@theme/spacing';
 import { useTheme } from '@theme/ThemeProvider';
 
+const FAB_SIZE = 56;
+
 export function CalendarScreen(): ReactElement {
   const theme = useTheme();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [month, setMonth] = useState(() => new Date());
-  const [selectedKey, setSelectedKey] = useState<string | null>(null);
   const [today, setToday] = useState(() => new Date());
+  const [selectedKey, setSelectedKey] = useState(() => toDateKey(new Date()));
   const title = formatMonthTitle(month);
   const { isLoading, error } = useMonthActivities(month);
   const activitiesByDate = useActivitiesStore((state) => state.activitiesByDate);
+  const selectedDate = useMemo(() => parseDateKey(selectedKey) ?? new Date(), [selectedKey]);
 
   // Si la app queda abierta pasada la medianoche, "hoy" se actualiza al volver al primer plano.
   useEffect(() => {
@@ -35,26 +41,51 @@ export function CalendarScreen(): ReactElement {
     return () => subscription.remove();
   }, []);
 
+  // Al cambiar de mes se selecciona hoy (si es ese mes) o el día 1, para que el panel siempre muestre un día.
+  const goToMonth = useCallback((next: Date) => {
+    setMonth(next);
+    const now = new Date();
+    setSelectedKey(toDateKey(sameMonth(now, next) ? now : next));
+  }, []);
+
   const showPreviousMonth = useCallback(() => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
-    setMonth((current) => shiftMonth(current, -1));
-  }, []);
+    goToMonth(shiftMonth(month, -1));
+  }, [goToMonth, month]);
 
   const showNextMonth = useCallback(() => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
-    setMonth((current) => shiftMonth(current, 1));
-  }, []);
+    goToMonth(shiftMonth(month, 1));
+  }, [goToMonth, month]);
 
-  const openDay = useCallback(
+  // Tocar un día lo selecciona aquí mismo. Si es de otro mes, el calendario salta a ese mes.
+  const selectDay = useCallback(
     (dateKey: string) => {
       setSelectedKey(dateKey);
-      router.push({ pathname: '/day/[date]', params: { date: dateKey } });
+      const date = parseDateKey(dateKey);
+      if (date && !sameMonth(date, month)) {
+        setMonth(shiftMonth(date, 0));
+      }
+    },
+    [month],
+  );
+
+  const openActivity = useCallback(
+    (id: string) => {
+      router.push({ pathname: '/activity/[id]', params: { id } });
     },
     [router],
   );
 
+  const createActivity = useCallback(() => {
+    router.push({ pathname: '/activity/new', params: { date: selectedKey } });
+  }, [router, selectedKey]);
+
   return (
-    <SafeAreaView style={[styles.screen, { backgroundColor: theme.colors.background }]}>
+    <SafeAreaView
+      style={[styles.screen, { backgroundColor: theme.colors.background }]}
+      edges={['top', 'left', 'right']}
+    >
       <View style={styles.header}>
         <Text accessibilityRole="header" style={[theme.typography.h1, { color: theme.colors.text }]}>
           {title}
@@ -82,11 +113,26 @@ export function CalendarScreen(): ReactElement {
           today={today}
           selectedKey={selectedKey}
           activitiesByDate={activitiesByDate}
-          onSelectDay={openDay}
+          onSelectDay={selectDay}
         />
+        <DayActivities
+          date={selectedDate}
+          dateKey={selectedKey}
+          isLoading={isLoading}
+          hasError={error !== null}
+          bottomInset={insets.bottom + FAB_SIZE + spacing.lg * 2}
+          onOpenActivity={openActivity}
+        />
+      </View>
+      <View style={[styles.fab, { bottom: insets.bottom + spacing.lg, right: spacing.lg }]}>
+        <Fab accessibilityLabel="Crear nueva actividad" onPress={createActivity} />
       </View>
     </SafeAreaView>
   );
+}
+
+function sameMonth(left: Date, right: Date): boolean {
+  return left.getFullYear() === right.getFullYear() && left.getMonth() === right.getMonth();
 }
 
 const styles = StyleSheet.create({
@@ -106,8 +152,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   body: {
+    flex: 1,
     paddingHorizontal: layout.screenPaddingHorizontal,
-    paddingBottom: spacing.lg,
     gap: spacing.md,
+  },
+  fab: {
+    position: 'absolute',
   },
 });

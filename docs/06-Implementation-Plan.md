@@ -4,6 +4,7 @@
 | Fase | Estado |
 |---|---|
 | 0–8 | Completadas (setup, Supabase, temas, auth, calendario, día, CRUD, ajustes, caché offline). |
+| Cambio de UX (nov 2026) | La ruta `day/[date]` se eliminó: tocar un día lo selecciona y muestra sus actividades bajo el calendario (`DayActivities`), con botón de crear. Solo crear y ver/editar una actividad abren otra pantalla (hoja modal). |
 | 9 — Pulido y QA | Casi completa: error boundary, animaciones, accesibilidad y estados de error hechos. Pendiente: QA manual en dispositivos reales Android/iOS y verificación de contrastes. |
 | 10 — Build EAS | Configurada en el repo: `eas.json` (perfiles `preview`, `production-apk`, `production`), `android.package` definitivo (`com.kalendaria.app`), proyecto enlazado en Expo y landing de descarga en `landing/`. Alcance: solo Android. Distribución: ver `07-Distribucion.md`. Pendiente: variables de entorno en EAS (`preview` y `production`), build `preview`, prueba del APK en dispositivo, release en GitHub y desplegar la landing en Vercel (ver `08-Guia-Produccion.md`). |
 

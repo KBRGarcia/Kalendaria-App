@@ -62,8 +62,7 @@ src/app/
 │   └── register.tsx
 └── (app)/               # Rutas protegidas
     ├── _layout.tsx      # Guard de autenticación
-    ├── calendar.tsx     # Calendario mensual (home)
-    ├── day/[date].tsx   # Detalle del día (ej: /day/2026-10-14)
+    ├── calendar.tsx     # Calendario mensual (home) con el panel de actividades del día seleccionado
     ├── activity/new.tsx # Crear actividad (?date=YYYY-MM-DD)
     ├── activity/[id].tsx
     └── settings.tsx     # Ajustes (tema, logout)
