@@ -5,10 +5,10 @@
 |---|---|
 | 0–8 | Completadas (setup, Supabase, temas, auth, calendario, día, CRUD, ajustes, caché offline). |
 | 9 — Pulido y QA | Casi completa: error boundary, animaciones, accesibilidad y estados de error hechos. Pendiente: QA manual en dispositivos reales Android/iOS y verificación de contrastes. |
-| 10 — Build EAS | Configurada en el repo: `eas.json` (perfiles `preview`, `production-apk`, `production`), `android.package` definitivo (`com.kalendaria.app`), proyecto enlazado en Expo y landing de descarga en `landing/`. Alcance: solo Android. Distribución: ver `07-Distribucion.md`. Pendiente: variables de entorno en EAS (`preview` y `production`), build `preview`, prueba del APK en dispositivo, release en GitHub y activar Pages. |
+| 10 — Build EAS | Configurada en el repo: `eas.json` (perfiles `preview`, `production-apk`, `production`), `android.package` definitivo (`com.kalendaria.app`), proyecto enlazado en Expo y landing de descarga en `landing/`. Alcance: solo Android. Distribución: ver `07-Distribucion.md`. Pendiente: variables de entorno en EAS (`preview` y `production`), build `preview`, prueba del APK en dispositivo, release en GitHub y desplegar la landing en Vercel (ver `08-Guia-Produccion.md`). |
 
 **Siguiente fase: cerrar Fase 9 (QA en dispositivo) y pasar a Fase 10.**
-Deuda técnica conocida: TRD §13 prevé tests (Jest) y §15 ESLint/Prettier; aún no están instalados.
+Pruebas: `npm test` (46 pruebas con `node --test`, sin dependencias nuevas). Deuda técnica conocida: TRD §15 prevé ESLint/Prettier, aún sin instalar; no hay pruebas de componentes ni E2E.
 
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------
 

@@ -1,5 +1,7 @@
 # Distribución de Kalendaria
 
+> Procedimiento completo, paso a paso, en [`08-Guia-Produccion.md`](08-Guia-Produccion.md). Esta página resume la decisión.
+
 **Estado:** vigente desde noviembre 2026. Hasta resolver el acceso a Google Play Console, la app se distribuye como APK desde una landing page.
 
 ## Decisión
@@ -8,8 +10,8 @@ Landing page profesional + APK alojado como asset de una GitHub Release. No se c
 
 - La landing es un sitio estático en [`landing/`](../landing/index.html). Explica la app, cómo instalarla y contiene el botón de descarga.
 - El APK vive en GitHub Releases con el nombre fijo `kalendaria.apk`. La URL `https://github.com/KBRGarcia/Kalendaria-App/releases/latest/download/kalendaria.apk` siempre apunta a la última versión, así que la landing no se edita en cada release.
-- La landing se publica con GitHub Pages mediante `.github/workflows/landing.yml` (se ejecuta al cambiar `landing/**` en `main`).
-- Cuando Play Store esté disponible, se añade su botón a la landing y el APK queda como alternativa.
+- La landing se publica en **Vercel** (plan Hobby) con *Root Directory* `landing` y sin paso de build; cada `git push` a `main` redepliega. Los encabezados de seguridad (CSP, HSTS) viven en `landing/vercel.json`.
+- Cuando Play Store esté disponible, se añade su URL a `playStoreUrl` en `landing/config.js` y el botón aparece solo; el APK queda como alternativa.
 
 ## Por qué no un enlace directo
 
@@ -44,7 +46,7 @@ Landing page profesional + APK alojado como asset de una GitHub Release. No se c
 
 ## Pendiente
 
-- Activar GitHub Pages en el repo: Settings → Pages → Source: “GitHub Actions”.
+- Importar el repo en Vercel con Root Directory `landing` (ver `08-Guia-Produccion.md`, sección 6).
 - Añadir capturas reales de la app a la landing.
-- Dominio propio (opcional) apuntando a GitHub Pages.
-- Política de privacidad (la pedirá Play Store).
+- Dominio propio (opcional) apuntando a Vercel.
+- Política de privacidad: ya existe en `landing/privacidad.html`; revisa que el contacto sea el que quieres publicar (`contactEmail` en `landing/config.js`).

@@ -32,14 +32,26 @@ export async function signUp(email: string, password: string): Promise<void> {
     throw new AuthRequestError(authMessages.confirmationStillRequired);
   }
 
-  await updateLastLogin();
+  await recordLastLogin();
 }
 
 export async function signIn(email: string, password: string): Promise<void> {
   const normalizedEmail = normalizeEmail(email);
   assertSignIn(normalizedEmail, password);
   await passwordSignIn(normalizedEmail, password);
-  await updateLastLogin();
+  await recordLastLogin();
+}
+
+// last_login_at es informativo: si falla (red intermitente, RPC no disponible)
+// no debe impedir el acceso de alguien que ya se autenticó correctamente.
+async function recordLastLogin(): Promise<void> {
+  try {
+    await updateLastLogin();
+  } catch (error: unknown) {
+    if (__DEV__) {
+      console.error(error);
+    }
+  }
 }
 
 export async function signOut(): Promise<void> {

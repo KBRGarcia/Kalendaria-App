@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Política de privacidad — Kalendaria</title>
+  <meta name="description" content="Qué datos guarda Kalendaria, para qué se usan y cómo puedes pedir que se eliminen.">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#F2ECEA" media="(prefers-color-scheme: light)">
+  <meta name="theme-color" content="#0E1C22" media="(prefers-color-scheme: dark)">
+  <link rel="icon" href="assets/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="styles.css">
+  <script src="theme-init.js"></script>
+</head>
+<body>
+  <a class="skip" href="#contenido">Saltar al contenido</a>
+  <header class="site-header is-stuck">
+    <div class="container header-row">
+      <a class="brand" href="./" aria-label="Kalendaria, volver al inicio"><img src="assets/logo-name.png" alt="Kalendaria" width="63" height="56"></a>
+      <a class="btn btn-secondary" href="./">Volver al inicio</a>
+    </div>
+  </header>
+
+  <main id="contenido" class="container">
+    <article class="prose">
+      <h1>Política de privacidad</h1>
+      <p class="caption">Última actualización: noviembre de 2026.</p>
+
+      <p>Kalendaria es una agenda personal para Android. Esta página explica, en pocas palabras, qué datos guarda y qué hace con ellos.</p>
+
+      <h2>Qué datos guardamos</h2>
+      <ul>
+        <li><strong>Correo electrónico y contraseña</strong> para tu cuenta. La contraseña se almacena cifrada (hash) y nadie, incluido el desarrollador, puede leerla.</li>
+        <li><strong>Tus actividades</strong>: fecha, título, categoría y nota opcional.</li>
+        <li><strong>Tu preferencia de tema</strong> (claro, oscuro o sistema) y la fecha de tu último inicio de sesión.</li>
+      </ul>
+
+      <h2>Qué no hacemos</h2>
+      <ul>
+        <li>No mostramos anuncios ni usamos herramientas de rastreo o analítica.</li>
+        <li>No vendemos ni compartimos tus datos con terceros con fines comerciales.</li>
+        <li>No enviamos notificaciones ni pedimos acceso a tus contactos, ubicación, cámara o micrófono.</li>
+      </ul>
+
+      <h2>Dónde se guardan</h2>
+      <p>Tus datos se almacenan en <strong>Supabase</strong>, un proveedor de base de datos en la nube, con conexión cifrada (HTTPS). Cada usuario solo puede leer y modificar sus propias actividades gracias a reglas de seguridad a nivel de fila. En tu teléfono, la sesión se guarda en el almacén seguro del sistema y una copia de lectura de tus actividades se guarda en caché para poder consultarlas sin conexión.</p>
+
+      <h2>Conservación y eliminación</h2>
+      <p>Conservamos tus datos mientras tengas cuenta. Puedes pedir la eliminación de tu cuenta y de todos tus datos en cualquier momento usando el contacto de más abajo. Cuando cierras sesión, la caché local se borra.</p>
+
+      <h2>Menores</h2>
+      <p>Kalendaria no está dirigida a menores de 13 años.</p>
+
+      <h2>Cambios en esta política</h2>
+      <p>Si algo cambia, actualizaremos esta página y la fecha de arriba.</p>
+
+      <h2>Contacto</h2>
+      <p id="contact">Para consultas o solicitudes sobre tus datos, escribe en <a href="#" data-link="issues" data-contact rel="noopener">la página de soporte</a>.</p>
+    </article>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-row caption">
+      <p>© <span id="year">2026</span> Kalendaria</p>
+      <nav class="footer-links" aria-label="Pie de página">
+        <a href="./">Inicio</a>
+        <a href="#" data-link="github" rel="noopener">GitHub</a>
+      </nav>
+    </div>
+  </footer>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

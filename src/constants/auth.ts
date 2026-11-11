@@ -1,9 +1,7 @@
 export const authMessages = {
   invalidCredentials: 'Correo o contraseña incorrectos.',
-  emailNotConfirmed:
-    'Esta cuenta no está confirmada. En Supabase desactiva Confirm email y confirma o borra el usuario en Authentication → Users.',
-  confirmationStillRequired:
-    'Supabase sigue pidiendo confirmación por correo. Desactiva Confirm email. Si la cuenta ya se creó, confírmala o bórrala en Authentication → Users.',
+  emailNotConfirmed: 'Esta cuenta todavía no está activada. Inténtalo más tarde o contacta con soporte.',
+  confirmationStillRequired: 'No se pudo completar el registro en este momento. Inténtalo más tarde.',
   duplicateEmail: 'Ese correo ya tiene una cuenta.',
   rateLimit: 'Has pedido demasiados intentos. Espera un momento e inténtalo de nuevo.',
   offline: 'Sin conexión. Revisa tu internet.',
