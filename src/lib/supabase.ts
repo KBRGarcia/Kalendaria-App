@@ -91,8 +91,11 @@ async function deleteIfPresent(key: string): Promise<void> {
   await SecureStore.deleteItemAsync(key);
 }
 
-function readPublicEnv(name: 'EXPO_PUBLIC_SUPABASE_URL' | 'EXPO_PUBLIC_SUPABASE_ANON_KEY'): string {
-  const value = process.env[name];
+// IMPORTANTE: las variables EXPO_PUBLIC_* deben leerse con acceso estático
+// (process.env.EXPO_PUBLIC_X). Expo las sustituye por su valor al compilar; una lectura
+// dinámica como process.env[nombre] funciona en desarrollo pero devuelve undefined en
+// el APK/AAB de producción y la app se cierra al arrancar.
+function requirePublicEnv(name: string, value: string | undefined): string {
   if (!value) {
     throw new Error(`Falta la variable de entorno ${name}.`);
   }
@@ -100,8 +103,8 @@ function readPublicEnv(name: 'EXPO_PUBLIC_SUPABASE_URL' | 'EXPO_PUBLIC_SUPABASE_
 }
 
 export const supabase = createClient<Database>(
-  readPublicEnv('EXPO_PUBLIC_SUPABASE_URL'),
-  readPublicEnv('EXPO_PUBLIC_SUPABASE_ANON_KEY'),
+  requirePublicEnv('EXPO_PUBLIC_SUPABASE_URL', process.env.EXPO_PUBLIC_SUPABASE_URL),
+  requirePublicEnv('EXPO_PUBLIC_SUPABASE_ANON_KEY', process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY),
   {
     auth: {
       storage: secureStoreAdapter,

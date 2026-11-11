@@ -5,8 +5,8 @@ window.KALENDARIA = {
   // URL estable: siempre apunta al APK de la última release de GitHub.
   apkUrl: 'https://github.com/KBRGarcia/Kalendaria-App/releases/latest/download/kalendaria.apk',
   // Tamaño y huella del APK publicado. Déjalos vacíos hasta tener la release.
-  apkSize: '',
-  sha256: '',
+  apkSize: '93 MB',
+  sha256: '2525bbb3514d60f5a76dd85b1bf057b6f254b9a12331ca6d1c254cac306d5c70',
   minAndroid: '8.0',
   // Cuando exista la ficha de Play Store, pon aquí su URL y el botón se activa solo.
   playStoreUrl: '',

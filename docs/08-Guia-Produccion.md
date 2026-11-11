@@ -67,7 +67,16 @@ Hoy desarrollas contra un único proyecto de Supabase. Para producción conviene
 | `kalendaria-dev` (el actual) | Desarrollo y pruebas | De prueba, se pueden borrar |
 | `kalendaria-prod` (nuevo) | Usuarios reales | Reales; no se tocan a mano |
 
-El plan Free permite 2 proyectos activos, así que cabe. Si prefieres no duplicar, puedes usar el actual como producción, pero entonces tus pruebas contaminarán los datos reales. **Recomendado: crear uno nuevo.**
+El plan Free permite 2 proyectos activos (verifícalo en tu dashboard).
+
+- **Opción A: dos proyectos (más seguro).** Producción queda aislada de tus pruebas, pero consumes los 2 cupos.
+- **Opción B: reutilizar el actual como producción (decisión actual).** Ahorra un cupo para el futuro. A cambio, desarrollo y producción comparten base de datos, así que:
+  1. En el proyecto actual, omite 2.2 y 2.3 si las tablas ya existen: compruébalo en el *Table Editor* (con RLS activo). Aplica igualmente 2.4 (Confirm email desactivado, contraseña mínima 8) y 2.5.
+  2. Antes de lanzar, borra tus usuarios de prueba en *Authentication → Users*. Sus actividades y perfiles se eliminan en cascada.
+  3. Haz respaldo (2.9) antes de cualquier cambio de esquema y escribe migraciones que solo añadan (`006_…`), sin borrar columnas ni tablas.
+  4. Prueba siempre con una cuenta tuya de prueba, y bórrala antes de cada release.
+  5. En EAS (sección 3) usa los mismos valores de `.env.local` para `preview` y `production`.
+  6. Cuando cambies el esquema con frecuencia, considera Supabase CLI con Docker (`supabase start`): una base local gratuita para desarrollo, sin gastar proyectos de la nube. Requiere renombrar las migraciones con marca de tiempo.
 
 ### 2.2 Crear el proyecto de producción
 
@@ -238,6 +247,22 @@ npm run build:apk
 Usa el perfil `production-apk` (entorno `production`, incrementa `versionCode` solo). Descarga el `.apk` resultante y **vuelve a probarlo** con la lista de 4.2, ahora contra el Supabase de producción.
 
 Renómbralo a `kalendaria.apk`.
+
+### 4.5 Comprobar que el APK lleva la configuración incrustada (antes de instalarlo)
+
+Un APK sin las variables de Supabase se instala bien pero **se cierra al abrirlo**. Compruébalo en segundos: el bundle debe contener la referencia de tu proyecto (la parte `xxxx` de `https://xxxx.supabase.co`).
+
+```bash
+REF=$(sed -n 's#.*https://\([a-z0-9]*\)\.supabase\.co.*#\1#p' .env.local); unzip -p ~/Descargas/kalendaria.apk assets/index.android.bundle | strings | grep -c "$REF"
+```
+
+Debe imprimir **1 o más**. Si imprime `0`, el build no incrustó las variables: no lo publiques. Las causas habituales son que las variables no estén cargadas en el entorno de EAS o que el código las lea con `process.env[nombre]` en vez de `process.env.EXPO_PUBLIC_NOMBRE` (la prueba `tests/env.test.ts` lo vigila).
+
+Si la app aun así se cierra, conecta el teléfono por USB (depuración USB activada) y mira el motivo real:
+
+```bash
+adb logcat -d | grep -E "AndroidRuntime|ReactNativeJS|FATAL" | tail -40
+```
 
 ---
 
