@@ -39,7 +39,10 @@ export const DayCell = memo(function DayCell({
       accessibilityRole="button"
       accessibilityLabel={dayLabel(date, activities.length)}
       onPress={() => onPress(dateKey)}
-      style={[styles.cell, { backgroundColor: cellBackground(theme.colors.primary, isToday, isSelected) }]}
+      style={({ pressed }) => [
+        styles.cell,
+        { backgroundColor: cellBackground(theme.colors.primary, isToday, isSelected), opacity: pressed ? 0.7 : 1 },
+      ]}
     >
       <Text
         style={[

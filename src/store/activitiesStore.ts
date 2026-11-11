@@ -24,6 +24,8 @@ interface ActivitiesState {
 const NO_ACTIVITIES: Activity[] = [];
 
 let fetchToken = 0;
+// Meses ya cargados en esta sesión: se revalidan en silencio, sin spinner ni parpadeo.
+const loadedMonths = new Set<string>();
 
 export const useActivitiesStore = create<ActivitiesState>((set, get) => ({
   activitiesByDate: {},
@@ -32,7 +34,8 @@ export const useActivitiesStore = create<ActivitiesState>((set, get) => ({
 
   fetchMonth: async (year, month) => {
     const token = ++fetchToken;
-    set({ isLoading: true, error: null });
+    const monthKey = monthPrefix(year, month);
+    set({ isLoading: !loadedMonths.has(monthKey), error: null });
 
     try {
       const activities = await activitiesService.fetchByMonth(year, month);
@@ -40,6 +43,7 @@ export const useActivitiesStore = create<ActivitiesState>((set, get) => ({
         return;
       }
 
+      loadedMonths.add(monthKey);
       const activitiesByDate = replaceMonth(get().activitiesByDate, year, month, activities);
       set({ activitiesByDate, isLoading: false, error: null });
       await rememberMonth(activitiesByDate, year, month);
@@ -129,6 +133,7 @@ export const useActivitiesStore = create<ActivitiesState>((set, get) => ({
 
   clearLocalActivities: () => {
     fetchToken += 1;
+    loadedMonths.clear();
     set({ activitiesByDate: {}, isLoading: false, error: null });
   },
 

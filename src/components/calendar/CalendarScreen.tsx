@@ -1,7 +1,7 @@
 import { useRouter } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { useCallback, useMemo, useState, type ReactElement } from 'react';
-import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useEffect, useState, type ReactElement } from 'react';
+import { ActivityIndicator, AppState, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MonthGrid } from '@components/calendar/MonthGrid';
@@ -9,7 +9,7 @@ import { MonthNavigator } from '@components/calendar/MonthNavigator';
 import { WeekdayHeader } from '@components/calendar/WeekdayHeader';
 import { IconButton } from '@components/ui/IconButton';
 import { useMonthActivities } from '@hooks/useMonthActivities';
-import { formatMonthTitle, shiftMonth } from '@lib/dates';
+import { formatMonthTitle, isSameCalendarDay, shiftMonth } from '@lib/dates';
 import { useActivitiesStore } from '@store/activitiesStore';
 import { layout, spacing } from '@theme/spacing';
 import { useTheme } from '@theme/ThemeProvider';
@@ -19,10 +19,21 @@ export function CalendarScreen(): ReactElement {
   const router = useRouter();
   const [month, setMonth] = useState(() => new Date());
   const [selectedKey, setSelectedKey] = useState<string | null>(null);
-  const today = useMemo(() => new Date(), []);
+  const [today, setToday] = useState(() => new Date());
   const title = formatMonthTitle(month);
   const { isLoading, error } = useMonthActivities(month);
   const activitiesByDate = useActivitiesStore((state) => state.activitiesByDate);
+
+  // Si la app queda abierta pasada la medianoche, "hoy" se actualiza al volver al primer plano.
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') {
+        setToday((current) => (isSameCalendarDay(current, new Date()) ? current : new Date()));
+      }
+    });
+
+    return () => subscription.remove();
+  }, []);
 
   const showPreviousMonth = useCallback(() => {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
@@ -57,12 +68,15 @@ export function CalendarScreen(): ReactElement {
       <View style={styles.body}>
         <MonthNavigator month={month} onPrevious={showPreviousMonth} onNext={showNextMonth} />
         <WeekdayHeader />
-        {error ? (
-          <Text accessibilityRole="alert" style={[theme.typography.caption, { color: theme.colors.error }]}>
-            {error}
-          </Text>
-        ) : null}
-        {isLoading ? <ActivityIndicator color={theme.colors.primary} /> : null}
+        <View style={styles.status}>
+          {error ? (
+            <Text accessibilityRole="alert" style={[theme.typography.caption, { color: theme.colors.error }]}>
+              {error}
+            </Text>
+          ) : isLoading ? (
+            <ActivityIndicator color={theme.colors.primary} />
+          ) : null}
+        </View>
         <MonthGrid
           month={month}
           today={today}
@@ -85,6 +99,11 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: layout.screenPaddingHorizontal,
     paddingTop: spacing.lg,
+  },
+  status: {
+    minHeight: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   body: {
     paddingHorizontal: layout.screenPaddingHorizontal,

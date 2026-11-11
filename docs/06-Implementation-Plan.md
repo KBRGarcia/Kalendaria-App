@@ -1,4 +1,17 @@
 
+## Estado del plan (actualizado noviembre 2026)
+
+| Fase | Estado |
+|---|---|
+| 0–8 | Completadas (setup, Supabase, temas, auth, calendario, día, CRUD, ajustes, caché offline). |
+| 9 — Pulido y QA | Casi completa: error boundary, animaciones, accesibilidad y estados de error hechos. Pendiente: QA manual en dispositivos reales Android/iOS y verificación de contrastes. |
+| 10 — Build EAS | Iniciada: `eas.json` creado. Pendiente: variables de entorno en EAS, `android.package` definitivo (hoy `com.anonymous.kalendaria`), `ios.bundleIdentifier`, build `preview` y prueba del APK. |
+
+**Siguiente fase: cerrar Fase 9 (QA en dispositivo) y pasar a Fase 10.**
+Deuda técnica conocida: TRD §13 prevé tests (Jest) y §15 ESLint/Prettier; aún no están instalados.
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 ## FASE 0 — Setup del Proyecto
 
 **Estado:** completada en octubre 2026 sobre el repo existente. No vuelvas a ejecutar `create-expo-app` dentro de esta carpeta.
