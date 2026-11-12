@@ -1,6 +1,7 @@
 import {
   addDays,
   addMonths,
+  addYears,
   eachDayOfInterval,
   endOfMonth,
   endOfWeek,
@@ -90,4 +91,44 @@ export function formatDaySpoken(date: Date): string {
 
 function capitalize(value: string): string {
   return value.charAt(0).toLocaleUpperCase('es') + value.slice(1);
+}
+
+export function shiftYear(date: Date, amount: number): Date {
+  // Conserva el mes y ancla al día 1 (el 29 de febrero no existe todos los años).
+  return addYears(startOfMonth(date), amount);
+}
+
+export function formatYearTitle(date: Date): string {
+  return String(date.getFullYear());
+}
+
+export function formatMonthName(date: Date): string {
+  return capitalize(format(date, 'LLLL', { locale: es }));
+}
+
+export function yearRange(year: number): { start: string; end: string } {
+  return { start: `${year}-01-01`, end: `${year}-12-31` };
+}
+
+export function yearPrefix(year: number): string {
+  return `${year}-`;
+}
+
+export function yearMonths(year: number): Date[] {
+  return Array.from({ length: 12 }, (_, month) => new Date(year, month, 1));
+}
+
+// Semanas (lunes a domingo) de un mes para la vista anual: solo los días del mes, el resto va a null.
+export function buildMonthWeeks(month: Date): (Date | null)[][] {
+  const cells = buildMonthCells(month).map((date) => (isSameMonth(date, month) ? date : null));
+  const weeks: (Date | null)[][] = [];
+
+  for (let index = 0; index < cells.length; index += 7) {
+    const week = cells.slice(index, index + 7);
+    if (week.some((cell) => cell !== null)) {
+      weeks.push(week);
+    }
+  }
+
+  return weeks;
 }

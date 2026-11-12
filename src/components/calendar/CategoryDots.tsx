@@ -1,7 +1,7 @@
 import { memo, type ReactElement } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { isActivityCategory, type ActivityCategory } from '@constants/categories';
+import { resolveCategory } from '@constants/categories';
 import { palette } from '@theme/colors';
 import { useTheme } from '@theme/ThemeProvider';
 import type { Activity } from '@/types/activity';
@@ -31,7 +31,7 @@ export const CategoryDots = memo(function CategoryDots({ activities }: CategoryD
           style={[
             styles.dot,
             {
-              backgroundColor: dotColor(theme.categories, activity.category),
+              backgroundColor: resolveCategory(activity, theme.categories).color,
               borderColor: dotBorder,
             },
           ]}
@@ -43,17 +43,6 @@ export const CategoryDots = memo(function CategoryDots({ activities }: CategoryD
     </View>
   );
 });
-
-function dotColor(
-  categories: Record<ActivityCategory, string>,
-  category: string,
-): string {
-  if (isActivityCategory(category)) {
-    return categories[category];
-  }
-
-  return categories.otro;
-}
 
 const styles = StyleSheet.create({
   row: {

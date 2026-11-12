@@ -8,7 +8,8 @@ interface MonthActivities {
   error: string | null;
 }
 
-export function useMonthActivities(cursor: Date): MonthActivities {
+// `enabled` permite apagar la carga del mes mientras se muestra la vista anual.
+export function useMonthActivities(cursor: Date, enabled = true): MonthActivities {
   const year = cursor.getFullYear();
   const month = cursor.getMonth() + 1;
   const isConnected = useNetworkStatus();
@@ -18,8 +19,10 @@ export function useMonthActivities(cursor: Date): MonthActivities {
   const error = useActivitiesStore((state) => state.error);
 
   useEffect(() => {
-    void fetchMonth(year, month);
-  }, [fetchMonth, year, month]);
+    if (enabled) {
+      void fetchMonth(year, month);
+    }
+  }, [enabled, fetchMonth, year, month]);
 
   useEffect(() => {
     if (isConnected === false) {
@@ -27,13 +30,13 @@ export function useMonthActivities(cursor: Date): MonthActivities {
       return;
     }
 
-    if (isConnected !== true || !wasOffline.current) {
+    if (!enabled || isConnected !== true || !wasOffline.current) {
       return;
     }
 
     wasOffline.current = false;
     void fetchMonth(year, month);
-  }, [fetchMonth, isConnected, month, year]);
+  }, [enabled, fetchMonth, isConnected, month, year]);
 
   return { isLoading, error };
 }

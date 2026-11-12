@@ -1,6 +1,6 @@
 {
   "name": "kalendaria",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "main": "expo-router/entry",
   "dependencies": {
     "@expo-google-fonts/inter": "^0.4.2",
@@ -41,7 +41,8 @@
     "typecheck": "tsc --noEmit && tsc --noEmit -p tests",
     "test": "node --disable-warning=MODULE_TYPELESS_PACKAGE_JSON --import ./tests/register.mjs --test-reporter=spec --test \"tests/*.test.ts\"",
     "landing": "node landing/dev-server.mjs",
-    "doctor": "expo-doctor",
+    "doctor": "npx expo-doctor",
+    "check": "npm run typecheck && npm test",
     "build:preview": "eas build --platform android --profile preview",
     "build:apk": "eas build --platform android --profile production-apk",
     "build:aab": "eas build --platform android --profile production",

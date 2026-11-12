@@ -3,7 +3,7 @@
 
 **Versión:** 1.1
 **Fecha:** Octubre 2026 · actualizado en noviembre 2026
-**Estado:** Aplicado en Supabase (migraciones 001–005) y verificado
+**Estado:** migraciones 001–005 aplicadas y verificadas; 006 (categoría personalizada) pendiente de aplicar
 **Documentos base:** `01-PRD.md`, `02-TRD.md`
 **Documentos relacionados:** `09-Supabase.md` (el servicio), `13-Backend-Flujo.md` (flujo de datos y peticiones HTTP)
 **Plataforma:** Supabase (PostgreSQL + Auth + RLS)
@@ -198,6 +198,8 @@ CREATE INDEX activities_date_idx ON public.activities(date);
 Columna   |   Tipo   |   Nulo   |   Default   |   Descripción
 id   |   uuid   |   NO   |   gen_random_uuid()   |   PK. Identificador único de la actividad.
 user_id   |   uuid   |   NO   |   —   |   FK a auth.users.id. Propietario de la actividad.
+custom_category_name   |   text   |   SÍ   |   NULL   |   Nombre propio de la categoría. Solo con category = 'otro'. 1–30 caracteres.
+custom_category_color   |   text   |   SÍ   |   NULL   |   Color hex (#RRGGBB) de la paleta de la app. Va siempre junto al nombre.
 date   |   date   |   NO   |   —   |   Fecha de la actividad (YYYY-MM-DD).
 title   |   text   |   NO   |   —   |   Título. Entre 1 y 100 caracteres.
 category   |   text   |   NO   |   —   |   Categoría. Valores permitidos: reunion, pendiente, personal, trabajo, otro.
@@ -552,6 +554,7 @@ Nota: No cacheamos profiles porque theme_preference se maneja por separado y el 
 3. 003_set_updated_at_function.sql — Función set_updated_at + triggers en ambas tablas.
 4. 004_enable_rls.sql — Activar RLS + políticas en profiles y activities.
 5. 005_update_last_login_function.sql — Función RPC update_last_login.
+6. 006_add_custom_category.sql — Columnas custom_category_name y custom_category_color en activities (categoría personalizada de «Otro»; nulables y compatibles con el APK 1.0.0).
 
 ### 9.2. Seed (solo para desarrollo)
 

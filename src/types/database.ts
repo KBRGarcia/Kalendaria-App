@@ -7,6 +7,8 @@ export type Database = {
         Row: {
           category: string;
           created_at: string;
+          custom_category_color: string | null;
+          custom_category_name: string | null;
           date: string;
           id: string;
           note: string | null;
@@ -18,6 +20,8 @@ export type Database = {
         Insert: {
           category: string;
           created_at?: string;
+          custom_category_color?: string | null;
+          custom_category_name?: string | null;
           date: string;
           id?: string;
           note?: string | null;
@@ -28,6 +32,8 @@ export type Database = {
         Update: {
           category?: string;
           created_at?: string;
+          custom_category_color?: string | null;
+          custom_category_name?: string | null;
           date?: string;
           id?: string;
           note?: string | null;

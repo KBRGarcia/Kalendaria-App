@@ -30,7 +30,7 @@ function builder(table: string) {
   mock.calls.push(call);
 
   const chain: Record<string, unknown> = {};
-  for (const method of ['select', 'insert', 'update', 'delete', 'eq', 'gte', 'lte', 'order', 'single', 'maybeSingle']) {
+  for (const method of ['select', 'insert', 'update', 'delete', 'eq', 'gte', 'lte', 'order', 'range', 'single', 'maybeSingle']) {
     chain[method] = (...args: unknown[]) => {
       call.ops.push(`${method}(${args.map((a) => JSON.stringify(a)).join(',')})`);
       return chain;

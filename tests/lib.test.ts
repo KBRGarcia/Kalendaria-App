@@ -23,6 +23,8 @@ function activity(overrides: Partial<Activity> = {}): Activity {
     date: '2026-11-11',
     title: 'Reunión',
     category: 'reunion',
+    custom_category_name: null,
+    custom_category_color: null,
     note: null,
     created_at: '2026-11-01T10:00:00Z',
     updated_at: '2026-11-01T10:00:00Z',

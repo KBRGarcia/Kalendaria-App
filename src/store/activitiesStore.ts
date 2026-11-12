@@ -3,7 +3,7 @@ import { create } from 'zustand';
 import { activityMessages } from '@constants/activities';
 import { authMessages } from '@constants/auth';
 import { loadMonthFromCache, saveMonthToCache } from '@lib/cache';
-import { monthPrefix, parseDateKey } from '@lib/dates';
+import { monthPrefix, parseDateKey, yearPrefix } from '@lib/dates';
 import { setSessionNotice } from '@lib/sessionNotice';
 import * as activitiesService from '@services/activitiesService';
 import { signOut } from '@services/authService';
@@ -14,6 +14,7 @@ interface ActivitiesState {
   isLoading: boolean;
   error: string | null;
   fetchMonth: (year: number, month: number) => Promise<void>;
+  fetchYear: (year: number) => Promise<void>;
   createActivity: (input: ActivityCreateInput) => Promise<void>;
   updateActivity: (id: string, input: ActivityUpdateInput) => Promise<void>;
   deleteActivity: (id: string) => Promise<void>;
@@ -73,6 +74,62 @@ export const useActivitiesStore = create<ActivitiesState>((set, get) => ({
 
       set({
         activitiesByDate: replaceMonth(get().activitiesByDate, year, month, cached),
+        isLoading: false,
+        error: activityMessages.offline,
+      });
+    }
+  },
+
+  fetchYear: async (year) => {
+    const token = ++fetchToken;
+    const yearKey = yearPrefix(year);
+    set({ isLoading: !loadedMonths.has(yearKey), error: null });
+
+    try {
+      const activities = await activitiesService.fetchByYear(year);
+      if (token !== fetchToken) {
+        return;
+      }
+
+      loadedMonths.add(yearKey);
+      for (let month = 1; month <= 12; month += 1) {
+        loadedMonths.add(monthPrefix(year, month));
+      }
+
+      const activitiesByDate = replaceByPrefix(get().activitiesByDate, yearKey, activities);
+      set({ activitiesByDate, isLoading: false, error: null });
+      for (let month = 1; month <= 12; month += 1) {
+        await rememberMonth(activitiesByDate, year, month);
+      }
+    } catch (error) {
+      if (token !== fetchToken) {
+        return;
+      }
+
+      if (await leaveIfSessionExpired(error)) {
+        return;
+      }
+
+      if (!activitiesService.isOfflineActivityError(error)) {
+        set({ isLoading: false, error: activitiesService.toActivityMessage(error) });
+        return;
+      }
+
+      const cachedMonths = await Promise.all(
+        Array.from({ length: 12 }, (_, index) => loadMonthFromCache(year, index + 1).catch(() => null)),
+      );
+      if (token !== fetchToken) {
+        return;
+      }
+
+      const cached = cachedMonths.flatMap((items) => items ?? []);
+      if (cachedMonths.every((items) => items === null)) {
+        set({ isLoading: false, error: activityMessages.offline });
+        return;
+      }
+
+      set({
+        activitiesByDate: replaceByPrefix(get().activitiesByDate, yearKey, cached),
         isLoading: false,
         error: activityMessages.offline,
       });
@@ -226,7 +283,15 @@ function replaceMonth(
   month: number,
   activities: Activity[],
 ): Record<string, Activity[]> {
-  const prefix = monthPrefix(year, month);
+  return replaceByPrefix(current, monthPrefix(year, month), activities);
+}
+
+// Sustituye todas las actividades cuyas fechas empiezan por el prefijo ('2026-11-' o '2026-').
+function replaceByPrefix(
+  current: Record<string, Activity[]>,
+  prefix: string,
+  activities: Activity[],
+): Record<string, Activity[]> {
   const next: Record<string, Activity[]> = {};
 
   for (const [date, items] of Object.entries(current)) {

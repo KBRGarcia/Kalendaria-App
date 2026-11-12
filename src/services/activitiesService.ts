@@ -1,11 +1,12 @@
 import { activityMessages } from '@constants/activities';
 import { authMessages } from '@constants/auth';
-import { monthRange } from '@lib/dates';
+import { monthRange, yearRange } from '@lib/dates';
 import { supabase } from '@lib/supabase';
 import { isSessionExpiredError } from '@services/authErrors';
 import type { Activity, ActivityCreateInput, ActivityUpdateInput } from '@/types/activity';
 
-const ACTIVITY_COLUMNS = 'id, user_id, date, title, category, note, created_at, updated_at';
+const ACTIVITY_COLUMNS =
+  'id, user_id, date, title, category, custom_category_name, custom_category_color, note, created_at, updated_at';
 
 export class ActivityRequestError extends Error {
   readonly userMessage: string;
@@ -43,6 +44,8 @@ export async function create(input: ActivityCreateInput): Promise<Activity> {
       date: input.date,
       title: input.title.trim(),
       category: input.category,
+      custom_category_name: input.customName ?? null,
+      custom_category_color: input.customColor ?? null,
       note: emptyToNull(input.note),
     })
     .select(ACTIVITY_COLUMNS)
@@ -61,6 +64,8 @@ export async function update(id: string, input: ActivityUpdateInput): Promise<Ac
     .update({
       title: input.title.trim(),
       category: input.category,
+      custom_category_name: input.customName ?? null,
+      custom_category_color: input.customColor ?? null,
       note: input.note,
     })
     .eq('id', id)
@@ -146,4 +151,34 @@ async function requireUserId(): Promise<string> {
 function emptyToNull(note: string | undefined): string | null {
   const trimmed = note?.trim() ?? '';
   return trimmed.length === 0 ? null : trimmed;
+}
+
+const PAGE_SIZE = 1000;
+
+// El año se pide en páginas porque Supabase limita cada respuesta a 1000 filas.
+export async function fetchByYear(year: number): Promise<Activity[]> {
+  const { start, end } = yearRange(year);
+  const all: Activity[] = [];
+
+  for (let from = 0; ; from += PAGE_SIZE) {
+    const { data, error } = await supabase
+      .from('activities')
+      .select(ACTIVITY_COLUMNS)
+      .gte('date', start)
+      .lte('date', end)
+      .order('date', { ascending: true })
+      .order('created_at', { ascending: true })
+      .order('id', { ascending: true })
+      .range(from, from + PAGE_SIZE - 1);
+
+    if (error) {
+      throw toActivityError(error);
+    }
+
+    const page = data ?? [];
+    all.push(...page);
+    if (page.length < PAGE_SIZE) {
+      return all;
+    }
+  }
 }

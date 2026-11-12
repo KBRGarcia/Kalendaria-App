@@ -68,7 +68,8 @@ npm start           # servidor Metro (después de tener el development build ins
 | Comando | Qué hace |
 |---|---|
 | `npm run typecheck` | TypeScript estricto sobre la app y las pruebas |
-| `npm test` | 48 pruebas (`node --test`, sin red y sin tocar la base real) |
+| `npm test` | 87 pruebas (`node --test`, sin red y sin tocar la base real) |
+| `npm run check` | Typecheck + pruebas en un solo comando: la verificación completa antes de cada cambio o release |
 | `npm run landing` | Landing en `http://localhost:4173` |
 | `npm run doctor` | Diagnóstico de compatibilidad de Expo |
 | `npm run build:preview` | APK de prueba (EAS) |
@@ -107,7 +108,7 @@ docs/               Documentación completa
 npm run typecheck && npm test
 ```
 
-Cubren fechas, validaciones, caché, traducción de errores, servicios y el store de actividades (incluido el modo sin conexión y la sesión expirada), más una prueba que impide leer variables de entorno de forma dinámica (que rompería el APK). No hay aún pruebas de componentes ni E2E.
+Cubren fechas, vista anual, categorías personalizadas, validaciones, caché, traducción de errores, servicios y el store de actividades (incluido el modo sin conexión y la sesión expirada), una prueba que impide leer variables de entorno de forma dinámica (que rompería el APK) y una auditoría estructural (`tests/project.test.ts`: imports rotos, rutas, migraciones, tipos, configuración de publicación). No hay aún pruebas de componentes ni E2E; `npx expo export --platform android` comprueba que la app empaqueta.
 
 ---
 

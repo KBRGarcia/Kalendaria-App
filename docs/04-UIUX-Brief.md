@@ -609,3 +609,11 @@ La landing (`landing/`) es una extensión web de la marca y sigue los mismos tok
 - Sin estilos ni scripts en línea (CSP estricta). Sin desbordamiento horizontal entre 320 y 1920 px.
 
 Detalle técnico en `10-Vercel.md`.
+
+---
+
+## Actualización 1.1 — Vistas del calendario y categoría personalizada
+
+- **Vistas Mes / Año.** Un control segmentado bajo el título alterna entre la vista mensual (la de siempre: cuadrícula, panel del día y botón de crear) y la anual (12 meses). Semana y Día quedan fuera por petición de la clienta.
+- **Vista anual.** Cada mes es una tarjeta con sus días; el día actual lleva un círculo del color primario y los días con actividades un punto del color de su categoría. Tocar un mes abre ese mes en la vista mensual. Las flechas cambian de año. La cuadrícula es responsiva: 3 meses por fila en teléfonos (< 600 dp) y 4 en pantallas anchas; la tipografía de los días escala hasta 1,2×. El botón de crear se oculta aquí porque crear requiere un día concreto.
+- **Categoría «Otro» personalizable.** Al elegir «Otro» aparecen un nombre opcional (máx. 30 caracteres) y una paleta cerrada de 12 colores (`CUSTOM_CATEGORY_COLORS`). Sin nombre se comporta como el «Otro» gris de siempre.

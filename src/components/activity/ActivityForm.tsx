@@ -3,6 +3,7 @@ import { useState, type ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { CategoryPicker } from '@components/activity/CategoryPicker';
+import { CustomCategoryFields } from '@components/activity/CustomCategoryFields';
 import { Button } from '@components/ui/Button';
 import { Input } from '@components/ui/Input';
 import { ACTIVITY_CATEGORIES, type ActivityCategory } from '@constants/categories';
@@ -17,6 +18,8 @@ export interface ActivityFormValues {
   title: string;
   category: ActivityCategory;
   note: string;
+  customName: string;
+  customColor: string | null;
 }
 
 interface ActivityFormProps {
@@ -46,10 +49,19 @@ export function ActivityForm({
   const [title, setTitle] = useState(initial.title);
   const [category, setCategory] = useState(initial.category);
   const [note, setNote] = useState(initial.note);
+  const [customName, setCustomName] = useState(initial.customName);
+  const [customColor, setCustomColor] = useState(initial.customColor);
   const [titleError, setTitleError] = useState<string | null>(null);
 
-  function publish(nextTitle: string, nextCategory: ActivityCategory, nextNote: string): void {
-    onDirtyChange(nextTitle !== initial.title || nextCategory !== initial.category || nextNote !== initial.note);
+  function publish(next: Partial<ActivityFormValues>): void {
+    const current: ActivityFormValues = { title, category, note, customName, customColor, ...next };
+    onDirtyChange(
+      current.title !== initial.title ||
+        current.category !== initial.category ||
+        current.note !== initial.note ||
+        current.customName !== initial.customName ||
+        current.customColor !== initial.customColor,
+    );
   }
 
   function handleSubmit(): void {
@@ -58,7 +70,7 @@ export function ActivityForm({
     }
 
     try {
-      const draft = parseActivityDraft(title, category, note);
+      const draft = parseActivityDraft(title, category, note, { name: customName, color: customColor });
       setTitleError(null);
       onSubmit(draft);
     } catch (submitError) {
@@ -79,7 +91,7 @@ export function ActivityForm({
         onChangeText={(value) => {
           setTitle(value);
           setTitleError(null);
-          publish(value, category, note);
+          publish({ title: value });
         }}
         placeholder="Ej: Reunión con el equipo"
         autoCapitalize="sentences"
@@ -90,18 +102,34 @@ export function ActivityForm({
         <Text style={[theme.typography.caption, { color: theme.colors.textSecondary }]}>Categoría</Text>
         <CategoryPicker
           value={category}
+          otherLabel={customName.trim()}
+          otherColor={customColor ?? undefined}
           onChange={(next) => {
             setCategory(next);
-            publish(title, next, note);
+            publish({ category: next });
           }}
         />
       </View>
+      {category === ACTIVITY_CATEGORIES.OTRO ? (
+        <CustomCategoryFields
+          name={customName}
+          color={customColor}
+          onNameChange={(value) => {
+            setCustomName(value);
+            publish({ customName: value });
+          }}
+          onColorChange={(value) => {
+            setCustomColor(value);
+            publish({ customColor: value });
+          }}
+        />
+      ) : null}
       <Input
         label="Nota (opcional)"
         value={note}
         onChangeText={(value) => {
           setNote(value);
-          publish(title, category, value);
+          publish({ note: value });
         }}
         placeholder="Añade detalles si lo necesitas"
         autoCapitalize="sentences"
@@ -141,6 +169,8 @@ export const EMPTY_ACTIVITY_FORM: ActivityFormValues = {
   title: '',
   category: ACTIVITY_CATEGORIES.REUNION,
   note: '',
+  customName: '',
+  customColor: null,
 };
 
 const styles = StyleSheet.create({

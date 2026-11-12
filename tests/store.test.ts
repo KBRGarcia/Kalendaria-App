@@ -18,6 +18,8 @@ function row(id: string, date: string, overrides: Partial<Activity> = {}): Activ
     date,
     title: `Act ${id}`,
     category: 'otro',
+    custom_category_name: null,
+    custom_category_color: null,
     note: null,
     created_at: `2026-11-01T10:00:0${id.length}Z`,
     updated_at: '2026-11-01T10:00:00Z',

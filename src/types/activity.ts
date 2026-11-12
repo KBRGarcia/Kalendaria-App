@@ -9,10 +9,14 @@ export interface ActivityCreateInput {
   title: string;
   category: ActivityCategory;
   note?: string;
+  customName?: string | null;
+  customColor?: string | null;
 }
 
 export interface ActivityUpdateInput {
   title: string;
   category: ActivityCategory;
   note: string | null;
+  customName?: string | null;
+  customColor?: string | null;
 }

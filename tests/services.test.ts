@@ -5,6 +5,12 @@ import { AuthApiError } from '@supabase/supabase-js';
 
 import { activityMessages } from '@constants/activities';
 import { authMessages } from '@constants/auth';
+import {
+  CUSTOM_CATEGORY_COLORS,
+  isCustomCategoryColor,
+  resolveCategory,
+  type ActivityCategory,
+} from '@constants/categories';
 import { mock } from '../tests/mocks/supabase.ts';
 import * as activities from '@services/activitiesService';
 import { parseActivityDraft } from '@services/activityValidation';
@@ -49,10 +55,92 @@ describe('authValidation', () => {
   });
 });
 
+describe('categorías personalizadas', () => {
+  const base: Record<ActivityCategory, string> = {
+    reunion: '#111111',
+    pendiente: '#222222',
+    trabajo: '#333333',
+    personal: '#444444',
+    otro: '#555555',
+  };
+
+  it('la paleta son hex únicos y válidos', () => {
+    const values = CUSTOM_CATEGORY_COLORS.map((color) => color.value);
+    assert.equal(new Set(values).size, values.length);
+    assert.ok(values.every((value) => /^#[0-9A-Fa-f]{6}$/.test(value) && isCustomCategoryColor(value)));
+    assert.equal(isCustomCategoryColor('#000000'), false);
+  });
+
+  it('resolveCategory usa nombre y color propios solo en "otro"', () => {
+    const color = CUSTOM_CATEGORY_COLORS[2]?.value ?? '';
+    assert.deepEqual(
+      resolveCategory({ category: 'otro', custom_category_name: 'Gimnasio', custom_category_color: color }, base),
+      { label: 'Gimnasio', color },
+    );
+    assert.deepEqual(
+      resolveCategory({ category: 'trabajo', custom_category_name: 'Gimnasio', custom_category_color: color }, base),
+      { label: 'Trabajo', color: '#333333' },
+    );
+  });
+
+  it('filas antiguas o de caché sin los campos se ven como siempre', () => {
+    assert.deepEqual(resolveCategory({ category: 'otro' }, base), { label: 'Otro', color: '#555555' });
+    assert.deepEqual(resolveCategory({ category: 'desconocida' }, base), { label: 'Otro', color: '#555555' });
+    assert.deepEqual(
+      resolveCategory({ category: 'otro', custom_category_name: 'X', custom_category_color: '#000000' }, base),
+      { label: 'Otro', color: '#555555' },
+    );
+  });
+});
+
 describe('activityValidation', () => {
   it('recorta y convierte nota vacía en null', () => {
     const draft = parseActivityDraft('  Reunión  ', 'reunion', '   ');
-    assert.deepEqual(draft, { title: 'Reunión', category: 'reunion', note: null });
+    assert.deepEqual(draft, {
+      title: 'Reunión',
+      category: 'reunion',
+      note: null,
+      customName: null,
+      customColor: null,
+    });
+  });
+
+  it('"Otro" con nombre y color de la paleta los conserva recortados', () => {
+    const color = CUSTOM_CATEGORY_COLORS[0]?.value ?? '';
+    const draft = parseActivityDraft('t', 'otro', '', { name: '  Gimnasio ', color });
+    assert.equal(draft.customName, 'Gimnasio');
+    assert.equal(draft.customColor, color);
+  });
+
+  it('"Otro" sin nombre se comporta como el de siempre y descarta el color', () => {
+    const color = CUSTOM_CATEGORY_COLORS[0]?.value ?? '';
+    const draft = parseActivityDraft('t', 'otro', '', { name: '   ', color });
+    assert.equal(draft.customName, null);
+    assert.equal(draft.customColor, null);
+  });
+
+  it('exige color válido de la paleta y nombre de hasta 30 caracteres', () => {
+    const color = CUSTOM_CATEGORY_COLORS[0]?.value ?? '';
+    assert.equal(
+      messageOf(() => parseActivityDraft('t', 'otro', '', { name: 'Gym', color: null })),
+      activityMessages.customColorRequired,
+    );
+    assert.equal(
+      messageOf(() => parseActivityDraft('t', 'otro', '', { name: 'Gym', color: '#123456' })),
+      activityMessages.customColorRequired,
+    );
+    assert.equal(
+      messageOf(() => parseActivityDraft('t', 'otro', '', { name: 'a'.repeat(31), color })),
+      activityMessages.customNameTooLong,
+    );
+    assert.equal(messageOf(() => parseActivityDraft('t', 'otro', '', { name: 'a'.repeat(30), color })), undefined);
+  });
+
+  it('con otra categoría fuerza nombre y color a null', () => {
+    const color = CUSTOM_CATEGORY_COLORS[0]?.value ?? '';
+    const draft = parseActivityDraft('t', 'trabajo', '', { name: 'Gym', color });
+    assert.equal(draft.customName, null);
+    assert.equal(draft.customColor, null);
   });
 
   it('valida título y nota', () => {
@@ -133,6 +221,24 @@ describe('activitiesService', () => {
     assert.match(ops, /"user_id":"user-1"/);
     assert.match(ops, /"title":"Hola"/);
     assert.match(ops, /"note":null/);
+  });
+
+  it('create y update envían la categoría personalizada (o null)', async () => {
+    mock.respond({ data: { id: 'new' }, error: null }, { data: { id: 'new' }, error: null });
+    await activities.create({
+      date: '2026-11-11',
+      title: 'x',
+      category: 'otro',
+      customName: 'Gimnasio',
+      customColor: '#D64550',
+    });
+    await activities.update('new', { title: 'x', category: 'trabajo', note: null });
+    const created = mock.calls[0]?.ops.join(' ') ?? '';
+    assert.match(created, /"custom_category_name":"Gimnasio"/);
+    assert.match(created, /"custom_category_color":"#D64550"/);
+    const updated = mock.calls[1]?.ops.join(' ') ?? '';
+    assert.match(updated, /"custom_category_name":null/);
+    assert.match(updated, /"custom_category_color":null/);
   });
 
   it('create sin usuario falla con mensaje de guardado', async () => {

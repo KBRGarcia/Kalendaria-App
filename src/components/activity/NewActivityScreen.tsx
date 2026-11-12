@@ -45,6 +45,8 @@ export function NewActivityScreen(): ReactElement {
         date: dateKey,
         title: draft.title,
         category: draft.category,
+        customName: draft.customName,
+        customColor: draft.customColor,
         note: draft.note ?? undefined,
       });
       await Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);

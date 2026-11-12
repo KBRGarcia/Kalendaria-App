@@ -7,16 +7,35 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { DayActivities } from '@components/calendar/DayActivities';
 import { MonthGrid } from '@components/calendar/MonthGrid';
 import { MonthNavigator } from '@components/calendar/MonthNavigator';
+import { PeriodNavigator } from '@components/calendar/PeriodNavigator';
 import { WeekdayHeader } from '@components/calendar/WeekdayHeader';
+import { YearView } from '@components/calendar/YearView';
 import { Fab } from '@components/ui/Fab';
 import { IconButton } from '@components/ui/IconButton';
+import { SegmentedControl } from '@components/ui/SegmentedControl';
 import { useMonthActivities } from '@hooks/useMonthActivities';
-import { formatMonthTitle, isSameCalendarDay, parseDateKey, shiftMonth, toDateKey } from '@lib/dates';
+import { useYearActivities } from '@hooks/useYearActivities';
+import {
+  formatMonthTitle,
+  formatYearTitle,
+  isSameCalendarDay,
+  parseDateKey,
+  shiftMonth,
+  shiftYear,
+  toDateKey,
+} from '@lib/dates';
 import { useActivitiesStore } from '@store/activitiesStore';
 import { layout, spacing } from '@theme/spacing';
 import { useTheme } from '@theme/ThemeProvider';
 
 const FAB_SIZE = 56;
+
+export type CalendarView = 'month' | 'year';
+
+const VIEW_OPTIONS = [
+  { value: 'month', label: 'Mes' },
+  { value: 'year', label: 'Año' },
+] as const;
 
 export function CalendarScreen(): ReactElement {
   const theme = useTheme();
@@ -25,8 +44,12 @@ export function CalendarScreen(): ReactElement {
   const [month, setMonth] = useState(() => new Date());
   const [today, setToday] = useState(() => new Date());
   const [selectedKey, setSelectedKey] = useState(() => toDateKey(new Date()));
-  const title = formatMonthTitle(month);
-  const { isLoading, error } = useMonthActivities(month);
+  const [view, setView] = useState<CalendarView>('month');
+  const isYearView = view === 'year';
+  const title = isYearView ? formatYearTitle(month) : formatMonthTitle(month);
+  const monthState = useMonthActivities(month, !isYearView);
+  const yearState = useYearActivities(month.getFullYear(), isYearView);
+  const { isLoading, error } = isYearView ? yearState : monthState;
   const activitiesByDate = useActivitiesStore((state) => state.activitiesByDate);
   const selectedDate = useMemo(() => parseDateKey(selectedKey) ?? new Date(), [selectedKey]);
 
@@ -57,6 +80,25 @@ export function CalendarScreen(): ReactElement {
     void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
     goToMonth(shiftMonth(month, 1));
   }, [goToMonth, month]);
+
+  const showPreviousYear = useCallback(() => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
+    goToMonth(shiftYear(month, -1));
+  }, [goToMonth, month]);
+
+  const showNextYear = useCallback(() => {
+    void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => undefined);
+    goToMonth(shiftYear(month, 1));
+  }, [goToMonth, month]);
+
+  // Tocar un mes de la vista anual abre ese mes en la vista mensual.
+  const openMonth = useCallback(
+    (next: Date) => {
+      goToMonth(next);
+      setView('month');
+    },
+    [goToMonth],
+  );
 
   // Tocar un día lo selecciona aquí mismo. Si es de otro mes, el calendario salta a ese mes.
   const selectDay = useCallback(
@@ -97,8 +139,24 @@ export function CalendarScreen(): ReactElement {
         />
       </View>
       <View style={styles.body}>
-        <MonthNavigator month={month} onPrevious={showPreviousMonth} onNext={showNextMonth} />
-        <WeekdayHeader />
+        <SegmentedControl
+          accessibilityLabel="Vista del calendario"
+          options={VIEW_OPTIONS}
+          value={view}
+          onChange={setView}
+        />
+        {isYearView ? (
+          <PeriodNavigator
+            title={title}
+            previousLabel="Año anterior"
+            nextLabel="Año siguiente"
+            onPrevious={showPreviousYear}
+            onNext={showNextYear}
+          />
+        ) : (
+          <MonthNavigator month={month} onPrevious={showPreviousMonth} onNext={showNextMonth} />
+        )}
+        {isYearView ? null : <WeekdayHeader />}
         <View style={styles.status}>
           {error ? (
             <Text accessibilityRole="alert" style={[theme.typography.caption, { color: theme.colors.error }]}>
@@ -108,25 +166,39 @@ export function CalendarScreen(): ReactElement {
             <ActivityIndicator color={theme.colors.primary} />
           ) : null}
         </View>
-        <MonthGrid
-          month={month}
-          today={today}
-          selectedKey={selectedKey}
-          activitiesByDate={activitiesByDate}
-          onSelectDay={selectDay}
-        />
-        <DayActivities
-          date={selectedDate}
-          dateKey={selectedKey}
-          isLoading={isLoading}
-          hasError={error !== null}
-          bottomInset={insets.bottom + FAB_SIZE + spacing.lg * 2}
-          onOpenActivity={openActivity}
-        />
+        {isYearView ? (
+          <YearView
+            year={month.getFullYear()}
+            today={today}
+            activitiesByDate={activitiesByDate}
+            bottomInset={insets.bottom + spacing.lg}
+            onSelectMonth={openMonth}
+          />
+        ) : (
+          <>
+            <MonthGrid
+              month={month}
+              today={today}
+              selectedKey={selectedKey}
+              activitiesByDate={activitiesByDate}
+              onSelectDay={selectDay}
+            />
+            <DayActivities
+              date={selectedDate}
+              dateKey={selectedKey}
+              isLoading={isLoading}
+              hasError={error !== null}
+              bottomInset={insets.bottom + FAB_SIZE + spacing.lg * 2}
+              onOpenActivity={openActivity}
+            />
+          </>
+        )}
       </View>
-      <View style={[styles.fab, { bottom: insets.bottom + spacing.lg, right: spacing.lg }]}>
-        <Fab accessibilityLabel="Crear nueva actividad" onPress={createActivity} />
-      </View>
+      {isYearView ? null : (
+        <View style={[styles.fab, { bottom: insets.bottom + spacing.lg, right: spacing.lg }]}>
+          <Fab accessibilityLabel="Crear nueva actividad" onPress={createActivity} />
+        </View>
+      )}
     </SafeAreaView>
   );
 }

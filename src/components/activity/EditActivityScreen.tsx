@@ -112,6 +112,8 @@ function toFormValues(activity: Activity): ActivityFormValues {
     title: activity.title,
     category: isActivityCategory(activity.category) ? activity.category : ACTIVITY_CATEGORIES.REUNION,
     note: activity.note ?? '',
+    customName: activity.custom_category_name ?? '',
+    customColor: activity.custom_category_color ?? null,
   };
 }
 

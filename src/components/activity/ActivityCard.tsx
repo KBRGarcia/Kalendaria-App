@@ -1,7 +1,7 @@
 import { memo, type ReactElement } from 'react';
 import { Pressable, StyleSheet, Text, View, type ViewStyle } from 'react-native';
 
-import { categoryLabel, isActivityCategory } from '@constants/categories';
+import { resolveCategory } from '@constants/categories';
 import { radius, spacing } from '@theme/spacing';
 import { useTheme, type AppTheme } from '@theme/ThemeProvider';
 import type { Activity } from '@/types/activity';
@@ -13,8 +13,7 @@ interface ActivityCardProps {
 
 export const ActivityCard = memo(function ActivityCard({ activity, onPress }: ActivityCardProps): ReactElement {
   const theme = useTheme();
-  const color = categoryColor(theme, activity.category);
-  const label = categoryLabel(activity.category);
+  const { color, label } = resolveCategory(activity, theme.categories);
   const note = activity.note?.trim();
 
   return (
@@ -39,14 +38,6 @@ export const ActivityCard = memo(function ActivityCard({ activity, onPress }: Ac
     </Pressable>
   );
 });
-
-function categoryColor(theme: AppTheme, category: string): string {
-  if (isActivityCategory(category)) {
-    return theme.categories[category];
-  }
-
-  return theme.categories.otro;
-}
 
 function cardSurface(theme: AppTheme): ViewStyle {
   const isDark = theme.colorScheme === 'dark';
