@@ -54,3 +54,17 @@ Landing page profesional + APK alojado como asset de una GitHub Release. No se c
 ## Documentación relacionada
 
 `08-Guia-Produccion.md` (paso a paso), `09-Supabase.md`, `10-Vercel.md`, `11-Expo.md`, `12-Herramientas-Dependencias.md` y `13-Backend-Flujo.md`.
+
+## Historial de versiones
+
+| Versión | versionCode | Contenido | Tamaño | SHA-256 |
+|---|---|---|---|---|
+| 1.0.0 | 3 | Primera versión pública | 93 MB | `2525bbb3514d60f5a76dd85b1bf057b6f254b9a12331ca6d1c254cac306d5c70` |
+| 1.1.0 | 4 | Categoría personalizada en «Otro» (migración 006) y vista anual Mes/Año | 93 MB (97 570 656 bytes) | `9ff5bd0b17322b0b353763f9281aec23dc9d9804d5dbfa6833eda1c165c05ea8` |
+
+Notas del proceso de la 1.1.0:
+
+- El orden fue: respaldo → migración 006 en Supabase → APK → prueba en teléfono → release → landing.
+- `npm run build:apk` necesita `eas-cli`; si no está instalado, `npx eas-cli build --platform android --profile production-apk` hace lo mismo. En PowerShell con la política de scripts restringida, usa `npm.cmd` / `npx.cmd`.
+- Si `gh` no está instalado, la release se crea desde la web de GitHub (ver `08-Guia-Produccion.md`).
+- **Publica `landing/config.js` (versión, tamaño y SHA-256) solo después de subir el APK a la release**: la landing sirve `releases/latest/download`, y un hash nuevo con el APK antiguo parecería una descarga alterada.

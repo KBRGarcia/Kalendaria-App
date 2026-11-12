@@ -3,7 +3,7 @@
 
 **Versión:** 1.1
 **Fecha:** Octubre 2026 · actualizado en noviembre 2026
-**Estado:** MVP implementado y publicado (v1.0.0, Android)
+**Estado:** MVP implementado y publicado (v1.1.0, Android: categoría personalizada y vista anual)
 
 ---
 
@@ -406,6 +406,6 @@ El usuario necesita recordar fechas importantes (reuniones, pendientes) y regist
 | RF-09 (categorías con colores) | ✅ Implementado con la paleta del brief |
 | RF-10 (tema claro/oscuro) | ✅ Implementado; la preferencia también se guarda en el perfil |
 | RF-11 (caché de lectura) | ✅ Implementado |
-| RF-12 (distribución por landing) | ✅ Landing publicada; APK 1.0.0 en GitHub Releases |
+| RF-12 (distribución por landing) | ✅ Landing publicada; APK 1.1.0 en GitHub Releases |
 | RNF-04 iOS | ⏳ No publicado |
 | Eliminación de cuenta | ⏳ Pendiente (requisito de Google Play) |

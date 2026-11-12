@@ -39,7 +39,7 @@ Este plan define **la secuencia exacta** en la que se construyó la app. Cada fa
 | 7 | Ajustes y Cierre de Sesión | 2-3 h | ✅ Completada |
 | 8 | Caché local y modo offline | 4-5 h | ✅ Completada |
 | 9 | Pulido, accesibilidad y QA | 4-6 h | ✅ Completada (QA en dispositivo real, nov 2026) |
-| 10 | Build de producción (EAS) | 2-4 h | ✅ Completada: APK 1.0.0 (versionCode 3) compilado, verificado y probado |
+| 10 | Build de producción (EAS) | 2-4 h | ✅ Completada: APK 1.0.0 (versionCode 3) y 1.1.0 (versionCode 4) compilados, verificados y probados |
 | 11 | Lanzamiento y operación | — | 🔄 En curso: landing en Vercel y release en GitHub |
 | 12 | Google Play | — | ⏳ Futura (acceso a Play Console + eliminar cuenta) |
 
